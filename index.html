@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>Retirement planner</title>
+<style>
+  :root{
+    --paper:#EDF0F3; --panel:#FFFFFF; --ink:#1B2836; --muted:#5C6B7A;
+    --line:#D3DAE1; --green:#0E6B54; --green-soft:#DDEFE8; --amber:#A8641A; --amber-soft:#F6E9D6;
+    --radius:10px;
+    --hero:#1B2836; --hero-ink:#FFFFFF; --hero-line:rgba(255,255,255,.18); --hero-chip:rgba(255,255,255,.12);
+  }
+  :root[data-theme=dark]{
+    --paper:#0F1419; --panel:#182028; --ink:#E6EBF0; --muted:#94A3B3;
+    --line:#2A3540; --green:#3FBF95; --green-soft:#153328; --amber:#E0A050; --amber-soft:#3A2B16;
+    --hero:#0A0E12; --hero-ink:#F2F5F8; --hero-line:rgba(255,255,255,.14); --hero-chip:rgba(255,255,255,.08);
+  }
+  .topbar{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+  .theme{display:flex;border:1px solid var(--line);border-radius:7px;overflow:hidden;flex-shrink:0;margin-top:2px}
+  .theme button{font:inherit;font-size:12.5px;padding:5px 9px;border:0;background:var(--panel);color:var(--ink);cursor:pointer}
+  .theme button[aria-pressed=true]{background:var(--ink);color:var(--paper)}
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.45 "Avenir Next","Segoe UI",system-ui,-apple-system,sans-serif;font-variant-numeric:tabular-nums}
+  main{max-width:640px;margin:0 auto;padding:20px 16px 60px}
+  h1{font-size:22px;font-weight:600;margin:0 0 4px}
+  .sub{color:var(--muted);margin:0 0 18px;font-size:14px}
+  section{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:16px;margin-bottom:14px}
+  h2{font-size:15px;font-weight:600;margin:0 0 12px}
+
+  /* hero */
+  .hero{background:var(--hero);color:var(--hero-ink);border:0}
+  .hero .big{font-size:52px;font-weight:700;line-height:1;letter-spacing:-.02em;margin:4px 0 2px}
+  .hero .big small{font-size:22px;font-weight:500;opacity:.7;margin-left:4px}
+  .hero .lead{font-size:14px;opacity:.75;margin:0}
+  .hero .verdict{margin:12px 0 0;padding:10px 12px;border-radius:8px;font-size:14px;font-weight:500}
+  .verdict.ok{background:var(--hero-chip)}
+  .verdict.warn{background:var(--amber);color:#fff}
+  .hero .row{display:flex;gap:18px;margin-top:16px;padding-top:14px;border-top:1px solid var(--hero-line);flex-wrap:wrap}
+  .hero .row div{min-width:120px}
+  .hero .row b{display:block;font-size:20px;font-weight:600}
+  .hero .row span{font-size:12.5px;opacity:.7}
+
+  /* inputs */
+  .field{display:grid;grid-template-columns:1fr auto;align-items:center;gap:6px 10px;padding:9px 0;border-bottom:1px solid var(--line)}
+  .field:last-child{border-bottom:0}
+  .field label{font-size:14.5px}
+  .field .hint{font-size:12px;color:var(--muted);grid-column:1/-1;margin-top:-2px}
+  input[type=number],select{font:inherit;font-size:15px;padding:7px 9px;border:1px solid var(--line);border-radius:7px;width:130px;text-align:right;background:var(--panel);color:var(--ink)}
+  select{text-align:left;width:auto;min-width:130px}
+  input:focus,select:focus{outline:2px solid var(--green);outline-offset:1px;border-color:var(--green)}
+  .seg{display:flex;border:1px solid var(--line);border-radius:7px;overflow:hidden}
+  .seg button{font:inherit;font-size:13.5px;padding:7px 10px;border:0;background:var(--panel);color:var(--ink);cursor:pointer}
+  .seg button[aria-pressed=true]{background:var(--ink);color:var(--paper)}
+  .check{display:flex;align-items:center;gap:8px;font-size:14px}
+  .check input{width:18px;height:18px;accent-color:var(--green)}
+
+  /* chart */
+  canvas{width:100%;height:220px;display:block}
+  .legend{display:flex;gap:16px;font-size:12.5px;color:var(--muted);margin-top:6px}
+  .legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px}
+
+  /* tables */
+  table{width:100%;border-collapse:collapse;font-size:14px}
+  td{padding:6px 0;border-bottom:1px solid var(--line);vertical-align:top}
+  tr:last-child td{border-bottom:0}
+  td:last-child{text-align:right;white-space:nowrap}
+  td.total{font-weight:600}
+  td.sub{color:var(--muted);padding-left:14px;font-size:13.5px}
+  .note{font-size:12.5px;color:var(--muted);margin:10px 0 0}
+  details summary{cursor:pointer;font-size:14px;font-weight:600}
+  details p{font-size:13.5px;color:var(--muted);margin:8px 0 0}
+  @media (prefers-reduced-motion:no-preference){.hero .big{transition:opacity .15s}}
+</style>
+</head>
+<body>
+<main>
+  <div class="topbar"><h1>Retirement planner</h1>
+    <div class="theme" id="theme" role="group" aria-label="Appearance"><button data-v="light">Light</button><button data-v="auto">Auto</button><button data-v="dark">Dark</button></div></div>
+  <p class="sub">Enter your own numbers below. The app grows your 401k to retirement, adds healthcare, grosses up for federal and Ohio taxes, then draws it down. Everything updates as you type.</p>
+
+  <section class="hero" aria-live="polite">
+    <p class="lead">401k withdrawal rate in your first year of retirement</p>
+    <div class="big"><span id="rate">—</span><small>per year</small></div>
+    <p class="lead" id="rateSub"></p>
+    <div class="verdict ok" id="verdict"></div>
+    <div class="row">
+      <div><b id="balRet">—</b><span>Balance at retirement</span></div>
+      <div><b id="wdRet">—</b><span>First-year withdrawal</span></div>
+      <div><b id="wdSS">—</b><span>Withdrawal once SS starts</span></div>
+      <div><b id="ssBen">—</b><span>Social Security at claim age</span></div>
+      <div><b id="medFirst">—</b><span>Healthcare, first year</span></div>
+      <div><b id="rmdFirst">—</b><span id="rmdFirstLbl">First RMD</span></div>
+      <div><b id="coastAge">—</b><span>Coast FIRE reached</span></div>
+      <div><b id="lasts">—</b><span>Money lasts</span></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Projection</h2>
+    <canvas id="chart" width="600" height="220" role="img" aria-label="401k balance by age"></canvas>
+    <div class="legend"><span><i style="background:var(--green)"></i>Saving</span><span><i style="background:var(--amber)"></i>Drawing down</span><span id="sideLegend" hidden><i style="background:var(--muted)"></i>Taxable account (excess RMDs)</span></div>
+  </section>
+
+  <section>
+    <h2>You today</h2>
+    <div class="field"><label for="age">Current age</label><input id="age" type="number" step="0.5" value="50"></div>
+    <div class="field"><label for="retAge">Retire at</label><input id="retAge" type="number" step="1" value="65"></div>
+    <div class="field"><label for="bal">401k balance</label><input id="bal" type="number" step="1000" value="500000"></div>
+    <div class="field"><label for="contrib">Monthly contribution</label><input id="contrib" type="number" step="10" value="1000"><span class="hint">Include any employer match.</span></div>
+    <div class="field"><label class="check"><input id="coast" type="checkbox"> Stop contributing once Coast FIRE is reached</label><span class="hint">Coast FIRE is the point where the balance will grow to what you need by itself, with no more contributions. Ticking this models exactly that.</span></div>
+    <div class="field"><label for="growth">Growth rate %</label><input id="growth" type="number" step="0.5" value="6"></div>
+    <div class="field"><label for="infl">Inflation %</label><input id="infl" type="number" step="0.5" value="3"></div>
+  </section>
+
+  <section>
+    <h2>Retirement income</h2>
+    <div class="field"><label for="need">Net income needed (today's $)</label>
+      <div style="display:flex;gap:6px;align-items:center"><input id="need" type="number" step="100" value="60000" style="width:110px"><div class="seg" id="needPer"><button aria-pressed="true" data-v="year">/yr</button><button aria-pressed="false" data-v="month">/mo</button></div></div>
+      <span class="hint" id="needHint">Spendable, after income taxes. Health insurance and medical costs are added on top, from the section below.</span></div>
+    <div class="field"><label for="ss">Social Security estimate, monthly (today's $)</label><input id="ss" type="number" step="50" value="2500"></div>
+    <div class="field"><label for="ssAt">That estimate is for age</label><input id="ssAt" type="number" step="1" min="62" max="70" value="65"></div>
+    <div class="field"><label for="claimAge">Claim Social Security at</label><input id="claimAge" type="number" step="1" min="62" max="70" value="65"><span class="hint">Assumes full retirement age 67 (born 1960 or later). Reduced up to 30% at 62, increased 8%/yr after 67, up to 24% at 70.</span></div>
+    <div class="field"><label>Filing status</label>
+      <div class="seg" id="status"><button aria-pressed="true" data-v="single">Single</button><button aria-pressed="false" data-v="mfj">Married joint</button></div>
+      <span class="hint">Married joint assumes both spouses are 65+ and this is the only Social Security.</span></div>
+    <div class="field"><label for="state">State</label><select id="state"><option value="oh">Ohio</option><option value="none">No state tax</option></select></div>
+    <div class="field"><label for="cityMode">City income tax</label><select id="cityMode"><option value="exempt">Ohio city (retirement income exempt)</option><option value="rate">City that taxes 401k withdrawals</option><option value="none">No city tax</option></select><span class="hint">Ohio cities can't tax Social Security, and their income tax applies to wages and business income, not pension or 401k distributions, so in retirement this is normally zero.</span></div>
+    <div class="field" id="cityRateRow" hidden><label for="city">City rate on 401k withdrawals %</label><input id="city" type="number" step="0.25" value="0"></div>
+    <div class="field"><label for="sd">School district income tax</label><select id="sd"></select><span class="hint">Traditional-base districts tax Ohio taxable income, which includes 401k withdrawals but not Social Security; $50 senior credit at 65. Earned-income-base districts don't tax retirement income at all.</span></div>
+    <div class="field"><label class="check"><input id="senior" type="checkbox" checked> Include the $6,000 senior deduction</label><span class="hint">Federal, ages 65+, currently set to expire after 2028. Uncheck to be conservative.</span></div>
+    <div class="field"><label for="endAge">Plan to age</label><input id="endAge" type="number" step="1" value="95"></div>
+  </section>
+
+  <section>
+    <h2>Healthcare</h2>
+    <div class="field"><label for="medInfl">Medical cost inflation %</label><input id="medInfl" type="number" step="0.5" value="5"><span class="hint">Historically runs 2–3 points above general inflation.</span></div>
+    <div class="field"><label for="preMed">Before 65: insurance premium, monthly</label><input id="preMed" type="number" step="50" value="1100"><span class="hint">Only used if you retire before 65. Unsubsidized marketplace coverage for someone in their early 60s runs roughly $900–1,400/mo per person; subsidies depend on income.</span></div>
+    <div class="field"><label for="preOop">Before 65: out-of-pocket, yearly</label><input id="preOop" type="number" step="250" value="3000"></div>
+    <div class="field"><label for="partB">Medicare Part B, monthly</label><input id="partB" type="number" step="1" value="202.90"><span class="hint">2026 standard premium. Income surcharges (IRMAA) are added automatically when your income is high enough.</span></div>
+    <div class="field"><label for="partD">Part D drug plan, monthly</label><input id="partD" type="number" step="1" value="46.50"></div>
+    <div class="field"><label for="medigap">Medigap or Advantage plan, monthly</label><input id="medigap" type="number" step="5" value="200"><span class="hint">Plan G for a new 65-year-old in Ohio is typically $150–250. Enter 0 for a $0-premium Advantage plan and raise out-of-pocket instead.</span></div>
+    <div class="field"><label for="medOop">Medicare out-of-pocket, yearly</label><input id="medOop" type="number" step="250" value="2500"><span class="hint">Deductibles, copays, dental, vision, hearing.</span></div>
+    <div class="field"><label for="people">People covered</label><input id="people" type="number" step="1" min="1" max="2" value="1"></div>
+    <table id="medTable" style="margin-top:12px"></table>
+  </section>
+
+  <section>
+    <h2>First-year budget (today's dollars)</h2>
+    <table id="taxTable"></table>
+    <p class="note">Withdrawal covers spending, healthcare, and taxes. Uses 2026 federal brackets, standard deduction, and the over-65 add-on. Ohio: flat 2.75% above $26,050, personal exemption, retirement income credit and senior credit. Social Security is not taxed by Ohio or by school districts. School district rates are the Ohio Department of Taxation's 2026 list; check your district's current rate since levies expire and renew.</p>
+  </section>
+
+  <section>
+    <h2>Coast FIRE</h2>
+    <table id="coastTable"></table>
+    <p class="note">The "number" is the smallest balance at retirement that still lasts to your plan age with everything above included: taxes, healthcare, Social Security timing, and RMDs. Coast FIRE is the first month your balance, left to grow with no further contributions, would reach that number by your retirement age.</p>
+  </section>
+
+  <section>
+    <h2>Required minimum distributions</h2>
+    <table id="rmdTable"></table>
+    <p class="note">RMDs start at 73 if you were born before 1960, otherwise 75, and use the IRS Uniform Lifetime Table. When the RMD is larger than what you need, the app withdraws the full RMD, pays tax on all of it, spends what's needed, and moves the rest into a taxable account that keeps growing and is drawn on if the 401k runs dry.</p>
+  </section>
+
+  <section>
+    <h2>How the balance gets there</h2>
+    <table id="growTable"></table>
+  </section>
+
+  <section>
+    <details>
+      <summary>How this works and what it leaves out</summary>
+      <p>Taxes are solved in today's dollars, then the resulting withdrawal is inflated to the retirement year (brackets index with inflation, and Social Security gets cost-of-living adjustments, so this is a fair approximation). In drawdown, withdrawals rise with inflation each year and the remaining balance keeps growing at the rate you set.</p>
+      <p>Healthcare costs grow at their own inflation rate and are added to spending each year. Medicare IRMAA surcharges use 2026 brackets indexed to inflation and are based on the same year's income (in reality they look back two years). Not modeled: Roth conversions, taxes on growth inside the taxable account, long-term care, sequence-of-returns risk, or any other income. Tax law in your retirement years will differ from 2026. This is a planning estimate, not advice.</p>
+    </details>
+  </section>
+</main>
+
+<script>
+(function(){
+  const $=id=>document.getElementById(id);
+  const fmt=n=>'$'+Math.round(n).toLocaleString('en-US');
+  const pct=n=>(n*100).toFixed(1)+'%';
+  let status='single', needPer='year';
+
+  // ---- 2026 federal parameters ----
+  const FED={
+    single:{std:16100,over65:2050,seniorMagi:75000,ssBase:25000,ssAdj:34000,ssMid:4500,
+      br:[[12400,.10],[50400,.12],[105700,.22],[201775,.24],[256225,.32],[640600,.35],[Infinity,.37]]},
+    mfj:{std:32200,over65:3300,seniorMagi:150000,ssBase:32000,ssAdj:44000,ssMid:6000,
+      br:[[24800,.10],[100800,.12],[211400,.22],[403550,.24],[512450,.32],[768700,.35],[Infinity,.37]]}
+  };
+  function taxableSS(w,ss,p){
+    const pi=w+0.5*ss;
+    if(pi<=p.ssBase) return 0;
+    if(pi<=p.ssAdj) return Math.min(0.5*ss,0.5*(pi-p.ssBase));
+    return Math.min(0.85*ss,0.85*(pi-p.ssAdj)+Math.min(0.5*ss,p.ssMid));
+  }
+  function bracketTax(ti,br){
+    let tax=0,prev=0;
+    for(const [cap,r] of br){ if(ti<=prev) break; tax+=(Math.min(ti,cap)-prev)*r; prev=cap; }
+    return tax;
+  }
+  function fedTax(w,ss,st,useSenior,over65=true){
+    const p=FED[st], persons=st==='mfj'?2:1;
+    const tss=taxableSS(w,ss,p), agi=w+tss;
+    let senior=0;
+    if(useSenior&&over65){ senior=6000*persons; if(agi>p.seniorMagi) senior=Math.max(0,senior-0.06*(agi-p.seniorMagi)); }
+    const ded=p.std+(over65?p.over65:0)+senior;
+    const ti=Math.max(0,agi-ded);
+    return {tax:bracketTax(ti,p.br),tss,agi,ded,ti,senior};
+  }
+  function ohioTax(w,st){
+    const persons=st==='mfj'?2:1;
+    const ex=(w<=40000?2400:w<=80000?2150:1900)*persons;
+    const ti=Math.max(0,w-ex);
+    let tax=Math.max(0,ti-26050)*0.0275;
+    const credits=(w>=8000?200:0)+50*persons;
+    return {tax:Math.max(0,tax-credits),ti,gross:tax,credits};
+  }
+  const FRA=67;
+  function ssFactor(age){
+    if(age>=FRA) return 1+Math.min(age-FRA,3)*0.08;
+    const early=(FRA-age)*12;
+    return 1-Math.min(early,36)*(5/9)/100-Math.max(0,early-36)*(5/12)/100;
+  }
+  function netOf(w,ss,st,state,city,useSenior,over65){
+    const f=fedTax(w,ss,st,useSenior,over65).tax;
+    const oh=state==='oh'?ohioTax(w,st):null;
+    const s=oh?oh.tax+sdTax(oh.ti,over65,st).tax:0;
+    const c=w*city;
+    return w+ss-f-s-c;
+  }
+  function solveW(target,ss,st,state,city,useSenior,over65){
+    let lo=0,hi=Math.max(1000,target*3);
+    if(netOf(0,ss,st,state,city,useSenior,over65)>=target) return 0;
+    for(let i=0;i<60;i++){ const mid=(lo+hi)/2; if(netOf(mid,ss,st,state,city,useSenior,over65)<target) lo=mid; else hi=mid; }
+    return hi;
+  }
+
+const SD=[["3301","Ada EVSD","Hardin, Hancock",0.015,"T"],["2301","Amanda-Clearcreek LSD","Fairfield",0.02,"E"],["7501","Anna LSD","Shelby",0.015,"T"],["1901","Ansonia LSD","Darke",0.0175,"T"],["6301","Antwerp LSD","Paulding",0.015,"T"],["3201","Arcadia LSD","Hancock, Seneca",0.01,"T"],["1902","Arcanum-Butler LSD","Darke",0.015,"T"],["3202","Arlington LSD","Hancock",0.0175,"T"],["0502","Athens CSD","Athens",0.01,"E"],["2001","Ayersville LSD","Defiance",0.01,"T"],["3901","Bellevue CSD","Huron, Erie, Sandusky, Seneca",0.005,"T"],["2801","Berkshire LSD","Geauga",0.01,"E"],["2302","Berne Union LSD","Fairfield, Hocking",0.02,"E"],["5501","Bethel LSD","Miami",0.0075,"E"],["2501","Bexley CSD","Franklin",0.0075,"T"],["2101","Big Walnut LSD","Delaware",0.0075,"T"],["1401","Blanchester LSD","Clinton, Brown, Clermont, Warren",0.01,"E"],["2303","Bloom-Carroll LSD","Fairfield",0.0125,"T"],["0203","Bluffton EVSD","Allen, Hancock",0.005,"T"],["7502","Botkins LSD","Shelby, Auglaize",0.0125,"E"],["8701","Bowling Green CSD","Wood, Henry",0.0125,"T"],["5502","Bradford EVSD","Miami, Darke, Shelby",0.0175,"T"],["8601","Bryan CSD","Williams",0.01,"T"],["1701","Buckeye Central LSD","Crawford, Huron, Richland, Seneca",0.015,"T"],["2102","Buckeye Valley LSD","Delaware, Marion, Morrow, Union",0.01,"T"],["2502","Canal Winchester LSD","Franklin, Fairfield",0.0075,"T"],["5901","Cardington-Lincoln LSD","Morrow, Marion",0.0075,"E"],["8801","Carey EVSD","Wyandot, Seneca",0.01,"T"],["8301","Carlisle LSD","Warren, Montgomery",0.01,"T"],["2902","Cedar Cliff LSD","Greene, Clark",0.0125,"T"],["5401","Celina CSD","Mercer",0.01,"E"],["4201","Centerburg LSD","Knox, Delaware, Licking",0.0075,"T"],["2002","Central LSD","Defiance, Williams",0.0125,"T"],["8501","Chippewa LSD","Wayne",0.01,"E"],["6501","Circleville CSD","Pickaway",0.0075,"E"],["7001","Clear Fork Valley LSD","Richland, Knox",0.01,"E"],["1303","Clermont-Northeastern LSD","Clermont, Brown",0.01,"T"],["1402","Clinton-Massie LSD","Clinton, Warren",0.01,"E"],["5204","Cloverleaf LSD","Medina",0.01,"E"],["7201","Clyde-Green Springs EVSD","Sandusky, Seneca",0.015,"E"],["5402","Coldwater EVSD","Mercer",0.01,"T"],["1703","Colonel Crawford LSD","Crawford",0.0125,"T"],["1502","Columbiana EVSD","Columbiana, Mahoning",0.01,"T"],["6901","Columbus Grove LSD","Putnam, Allen",0.01,"T"],["6902","Continental LSD","Putnam",0.01,"T"],["3203","Cory-Rawson LSD","Hancock",0.0175,"T"],["5503","Covington EVSD","Miami",0.02,"T"],["1704","Crestline EVSD","Crawford, Richland",0.0025,"E"],["1503","Crestview LSD","Columbiana",0.01,"T"],["8101","Crestview LSD","Van Wert",0.01,"T"],["8502","Dalton LSD","Wayne",0.0075,"T"],["4202","Danville LSD","Knox, Holmes",0.0175,"T"],["2003","Defiance CSD","Defiance, Paulding",0.005,"T"],["0204","Delphos CSD","Allen, Van Wert",0.005,"T"],["8702","Eastwood LSD","Wood",0.01,"E"],["6803","Eaton CSD","Preble",0.015,"T"],["8602","Edgerton LSD","Williams, Defiance",0.01,"T"],["5101","Elgin LSD","Marion, Delaware, Hardin",0.0075,"E"],["8703","Elmwood LSD","Wood, Hancock",0.0125,"T"],["2602","Evergreen LSD","Fulton, Lucas",0.015,"T"],["8001","Fairbanks LSD","Union, Madison",0.01,"T"],["2903","Fairborn CSD","Greene, Clark, Montgomery",0.005,"T"],["2304","Fairfield Union LSD","Fairfield, Hocking, Perry",0.02,"T"],["7503","Fairlawn LSD","Shelby",0.0075,"T"],["2603","Fayette LSD","Fulton",0.01,"T"],["3204","Findlay CSD","Hancock",0.01,"E"],["7504","Fort Loramie LSD","Shelby, Darke",0.015,"T"],["5406","Fort Recovery LSD","Mercer, Darke",0.015,"T"],["1903","Franklin Monroe LSD","Darke, Miami",0.0075,"T"],["7202","Fremont CSD","Sandusky",0.0125,"T"],["0404","Geneva Area CSD","Ashtabula",0.0125,"E"],["7203","Gibsonburg EVSD","Sandusky, Wood",0.01,"E"],["1305","Goshen LSD","Clermont, Warren",0.01,"T"],["4501","Granville EVSD","Licking",0.0075,"T"],["8503","Green LSD","Wayne",0.005,"E"],["2904","Greeneview LSD","Greene, Clinton, Fayette",0.01,"T"],["3603","Greenfield EVSD","Highland, Fayette, Ross",0.0125,"E"],["1904","Greenville CSD","Darke",0.005,"T"],["3302","Hardin Northern LSD","Hardin, Hancock",0.0175,"T"],["7505","Hardin-Houston LSD","Shelby",0.0075,"T"],["2004","Hicksville EVSD","Defiance",0.015,"T"],["5902","Highland LSD","Morrow, Delaware",0.005,"T"],["3604","Hillsboro CSD","Highland",0.01,"T"],["0302","Hillsdale LSD","Ashland, Wayne",0.0125,"E"],["3501","Holgate LSD","Henry",0.015,"T"],["7403","Hopewell-Loudon LSD","Seneca",0.005,"E"],["7506","Jackson Center LSD","Shelby, Auglaize, Logan",0.015,"E"],["6704","James A Garfield LSD","Portage",0.015,"E"],["4901","Jefferson LSD","Madison",0.01,"E"],["6903","Jennings LSD","Putnam",0.0075,"T"],["4503","Johnstown-Monroe LSD","Licking, Delaware",0.01,"T"],["4902","Jonathan Alder LSD","Madison, Franklin, Union",0.0125,"E"],["6904","Kalida LSD","Putnam",0.01,"T"],["3303","Kenton CSD","Hardin, Wyandot",0.01,"T"],["8303","Kings LSD","Warren",0.01,"E"],["7204","Lakota LSD","Sandusky, Seneca, Wood",0.015,"T"],["2305","Lancaster CSD","Fairfield",0.015,"E"],["6905","Leipsic LSD","Putnam",0.0075,"T"],["3502","Liberty Center LSD","Henry, Fulton",0.0175,"T"],["2306","Liberty Union-Thurston LSD","Fairfield",0.0175,"T"],["3205","Liberty-Benton LSD","Hancock",0.0075,"T"],["4506","Licking Valley LSD","Licking, Muskingum",0.01,"T"],["6502","Logan Elm LSD","Pickaway, Hocking",0.01,"E"],["4903","London CSD","Madison",0.01,"T"],["0303","Loudonville-Perrysville EVSD","Ashland, Holmes, Knox, Richland",0.0125,"T"],["0905","Madison LSD","Butler",0.005,"T"],["4904","Madison Plains LSD","Madison, Fayette, Franklin",0.0125,"E"],["5403","Marion LSD","Mercer, Auglaize, Darke",0.005,"E"],["3206","McComb LSD","Hancock, Putnam, Wood",0.015,"T"],["1102","Mechanicsburg EVSD","Champaign, Madison",0.015,"T"],["5504","Miami East LSD","Miami, Champaign",0.0175,"E"],["8604","Millcreek-West Unity LSD","Williams",0.01,"T"],["6906","Miller City-New Cleveland LSD","Putnam",0.0125,"T"],["5505","Milton-Union EVSD","Miami",0.02,"E"],["0601","Minster LSD","Auglaize, Darke, Mercer, Shelby",0.01,"T"],["1905","Mississinawa Valley LSD","Darke",0.0175,"T"],["8802","Mohawk LSD","Wyandot, Crawford, Seneca",0.01,"T"],["3902","Monroeville LSD","Huron, Erie",0.015,"E"],["8605","Montpelier EVSD","Williams",0.0125,"E"],["5903","Mount Gilead EVSD","Morrow",0.0075,"T"],["6802","National Trail LSD","Preble, Darke",0.0175,"T"],["0602","New Bremen LSD","Auglaize, Mercer, Shelby",0.01,"T"],["0603","New Knoxville LSD","Auglaize, Shelby",0.0125,"T"],["5708","New Lebanon LSD","Montgomery",0.0125,"T"],["3903","New London LSD","Huron, Ashland, Lorain",0.01,"T"],["0907","New Miami LSD","Butler",0.01,"T"],["7404","New Riegel LSD","Seneca",0.015,"T"],["4507","Newark CSD","Licking",0.01,"T"],["5506","Newton LSD","Miami, Darke",0.0175,"T"],["8705","North Baltimore LSD","Wood, Hancock",0.0125,"E"],["4508","North Fork LSD","Licking, Knox",0.01,"E"],["8003","North Union LSD","Union, Delaware",0.01,"T"],["1203","Northeastern LSD","Clark, Champaign",0.01,"E"],["5904","Northmor LSD","Morrow, Marion, Richland",0.01,"T"],["4509","Northridge LSD","Licking, Delaware, Knox",0.005,"E"],["7612","Northwest LSD","Stark, Summit, Wayne",0.01,"E"],["8505","Northwestern LSD","Wayne, Ashland",0.0125,"T"],["1204","Northwestern LSD","Clark, Champaign",0.01,"E"],["8706","Northwood LSD","Wood",0.0025,"E"],["7711","Norton CSD","Summit",0.005,"E"],["3904","Norwalk CSD","Huron",0.005,"T"],["8504","Norwayne LSD","Wayne, Medina",0.0075,"E"],["4712","Oberlin CSD","Lorain",0.02,"T"],["7405","Old Fort LSD","Seneca, Sandusky",0.01,"T"],["8707","Otsego LSD","Wood, Henry, Lucas",0.01,"T"],["6907","Ottawa-Glandorf LSD","Putnam",0.015,"T"],["6908","Ottoville LSD","Putnam, Paulding",0.0075,"T"],["6909","Pandora-Gilboa LSD","Putnam, Allen",0.0175,"T"],["5405","Parkway LSD","Mercer, Auglaize, Van Wert",0.01,"T"],["3504","Patrick Henry LSD","Henry, Putnam, Wood",0.0175,"T"],["6302","Paulding EVSD","Paulding, Putnam",0.01,"T"],["8708","Perrysburg EVSD","Wood",0.005,"T"],["2604","Pettisville LSD","Fulton, Henry",0.01,"T"],["2307","Pickerington LSD","Fairfield, Franklin",0.01,"T"],["2605","Pike-Delta-York LSD","Fulton",0.01,"T"],["5507","Piqua CSD","Miami",0.0125,"T"],["5103","Pleasant LSD","Marion",0.01,"E"],["7007","Plymouth-Shiloh LSD","Richland, Crawford, Huron",0.01,"T"],["6804","Preble Shawnee LSD","Preble, Butler, Montgomery",0.0175,"T"],["2509","Reynoldsburg CSD","Franklin, Fairfield, Licking",0.005,"T"],["5104","Ridgedale LSD","Marion, Crawford, Wyandot",0.01,"E"],["3304","Ridgemont LSD","Hardin, Logan",0.0175,"T"],["5105","River Valley LSD","Marion, Morrow",0.01,"E"],["3305","Riverdale LSD","Hancock, Hardin, Wyandot",0.01,"T"],["4604","Riverside LSD","Logan, Shelby",0.015,"E"],["0908","Ross LSD","Butler",0.0125,"E"],["7507","Russia LSD","Shelby, Darke",0.0075,"T"],["5008","Sebring LSD","Mahoning",0.01,"E"],["7406","Seneca East LSD","Seneca, Huron",0.01,"T"],["7008","Shelby CSD","Richland",0.01,"T"],["7508","Sidney CSD","Shelby, Logan",0.0075,"E"],["3905","South Central LSD","Huron, Richland",0.0125,"T"],["1205","Southeastern LSD","Clark, Greene",0.01,"T"],["3118","Southwest LSD","Hamilton, Butler",0.0075,"E"],["4510","Southwest Licking LSD","Licking, Fairfield",0.0075,"T"],["0209","Spencerville LSD","Allen, Auglaize, Van Wert",0.01,"T"],["5010","Springfield LSD","Mahoning",0.01,"T"],["0604","St Marys CSD","Auglaize",0.01,"E"],["8607","Stryker LSD","Williams",0.015,"T"],["2606","Swanton LSD","Fulton, Lucas",0.0075,"T"],["0909","Talawanda CSD","Butler, Preble",0.01,"T"],["6503","Teays Valley LSD","Pickaway, Fairfield, Franklin",0.015,"E"],["7407","Tiffin CSD","Seneca",0.0075,"E"],["6806","Tri-County North LSD","Preble, Darke, Montgomery",0.01,"E"],["1906","Tri-Village LSD","Darke",0.015,"T"],["1103","Triad LSD","Champaign, Logan, Union",0.015,"T"],["0505","Trimble LSD","Athens, Morgan",0.01,"E"],["8509","Triway LSD","Wayne, Holmes",0.01,"E"],["5509","Troy CSD","Miami",0.015,"E"],["6805","Twin Valley Community LSD","Preble",0.015,"T"],["7106","Union-Scioto LSD","Ross",0.005,"T"],["1510","United LSD","Columbiana",0.005,"T"],["8803","Upper Sandusky EVSD","Wyandot, Crawford, Marion",0.0125,"T"],["3306","Upper Scioto Valley LSD","Hardin, Auglaize, Logan",0.005,"T"],["5713","Valley View LSD","Montgomery, Preble",0.0175,"T"],["3207","Van Buren LSD","Hancock",0.01,"T"],["8104","Van Wert CSD","Van Wert",0.01,"T"],["3208","Vanlue LSD","Hancock, Seneca, Wyandot",0.01,"T"],["1907","Versailles EVSD","Darke, Shelby",0.01,"T"],["2308","Walnut Township LSD","Fairfield",0.0175,"E"],["0605","Wapakoneta CSD","Auglaize",0.0075,"T"],["2402","Washington Court House CSD","Fayette",0.01,"E"],["2607","Wauseon EVSD","Fulton",0.0175,"E"],["6303","Wayne Trace LSD","Paulding, Putnam, Van Wert",0.0125,"T"],["0606","Waynesfield-Goshen LSD","Auglaize, Allen, Logan",0.01,"T"],["4715","Wellington EVSD","Lorain, Huron",0.01,"T"],["1105","West Liberty-Salem LSD","Champaign, Logan",0.0175,"T"],["3906","Western Reserve LSD","Huron, Erie",0.0125,"T"],["2514","Westerville CSD","Franklin, Delaware",0.0075,"E"],["3907","Willard CSD","Huron, Crawford",0.0075,"E"],["3122","Wyoming CSD","Hamilton",0.0125,"T"],["2906","Xenia Community CSD","Greene, Warren",0.005,"T"],["2907","Yellow Springs EVSD","Greene, Clark",0.02,"T"],["7107","Zane Trace LSD","Ross",0.0075,"E"]];
+  (function(){
+    const sel=$('sd'); const mk=(v,t)=>{const o=document.createElement('option');o.value=v;o.textContent=t;return o;};
+    sel.appendChild(mk('','No school district income tax'));
+    const gT=document.createElement('optgroup'); gT.label='Traditional base (taxes 401k withdrawals)';
+    const gE=document.createElement('optgroup'); gE.label='Earned income base (no tax in retirement)';
+    SD.forEach(r=>{ (r[4]==='T'?gT:gE).appendChild(mk(r[0],`${r[1]} (${r[2]}) ${(r[3]*100).toFixed(2).replace(/\.?0+$/,'')}%`)); });
+    sel.appendChild(gT); sel.appendChild(gE);
+    $('cityMode').addEventListener('change',()=>{ $('cityRateRow').hidden=$('cityMode').value!=='rate'; });
+  })();
+  function sdTax(ohioTI,over65,st){
+    const r=SD.find(x=>x[0]===$('sd').value); if(!r||r[4]!=='T') return {tax:0,rate:0,name:r?r[1]:''};
+    const tax=Math.max(0,ohioTI*r[3]-(over65?50*(st==='mfj'?2:1):0));
+    return {tax,rate:r[3],name:r[1]};
+  }
+  // IRS Uniform Lifetime Table (2022+)
+  const ULT={72:27.4,73:26.5,74:25.5,75:24.6,76:23.7,77:22.9,78:22.0,79:21.1,80:20.2,81:19.4,82:18.5,83:17.7,84:16.8,85:16.0,86:15.2,87:14.4,88:13.7,89:12.9,90:12.2,91:11.5,92:10.8,93:10.1,94:9.5,95:8.9,96:8.4,97:7.8,98:7.3,99:6.8,100:6.4,101:6.0,102:5.6,103:5.2,104:4.9,105:4.6,106:4.3,107:4.1,108:3.9,109:3.7,110:3.5};
+  const divisor=a=>ULT[Math.min(110,Math.max(72,Math.floor(a)))];
+  // 2026 IRMAA: [MAGI threshold single, Part B surcharge/mo, Part D surcharge/mo]
+  const IRMAA=[[109000,81.20,14.50],[137000,202.90,37.50],[171000,324.70,60.40],[205000,446.30,83.30],[500000,487.00,91.00]];
+  function irmaaMonthly(magi,st){
+    const mult=st==='mfj'?2:1; let b=0,d=0;
+    for(const [th,pb,pd] of IRMAA){ if(magi>th*mult){ b=pb; d=pd; } }
+    return {b,d};
+  }
+
+  function calc(){
+    const age=+$('age').value, retAge=+$('retAge').value, bal0=+$('bal').value, contrib=+$('contrib').value;
+    const g=+$('growth').value/100, infl=+$('infl').value/100, need=+$('need').value*(needPer==='month'?12:1);
+    const ssAt=+$('ssAt').value, claimAge=Math.max(+$('claimAge').value, retAge);
+    const ssAnnual=+$('ss').value*12*ssFactor(+$('claimAge').value)/ssFactor(ssAt);
+    const state=$('state').value, city=$('cityMode').value==='rate'?+$('city').value/100:0, useSenior=$('senior').checked, endAge=+$('endAge').value;
+    const medInfl=+$('medInfl').value/100, people=Math.max(1,+$('people').value);
+    const preMed=(+$('preMed').value*12+ +$('preOop').value)*people;
+    const partB=+$('partB').value, partD=+$('partD').value, medigap=+$('medigap').value, medOop=+$('medOop').value;
+    const medBase=((partB+partD+medigap)*12+medOop)*people;
+    const yrs=Math.max(0,retAge-age);
+
+    // growth phase, monthly steps (contributions may stop at the coast age)
+    const mr=Math.pow(1+g,1/12)-1, months=Math.round(yrs*12);
+    const growthOnly=bal0*Math.pow(1+g,yrs);
+    function grow(stopMonth){ let x=bal0; const path=[bal0];
+      for(let m=0;m<months;m++){ x=x*(1+mr)+(m<stopMonth?contrib:0); path.push(x); } return {b:x,path}; }
+    let {b,path}=grow(Infinity);
+    const fromContrib=b-growthOnly;
+
+    const birthYear=new Date().getFullYear()-Math.floor(age);
+    const rmdAge=birthYear>=1960?75:73;
+
+    // one retirement year. Money amounts inside are today's dollars unless suffixed Nom.
+    function year(a,balNom){
+      const t=a-age, inflate=Math.pow(1+infl,t);
+      const ss=a>=claimAge?ssAnnual:0;
+      const medReal=(a<65?preMed:medBase)*Math.pow((1+medInfl)/(1+infl),t);
+      const taxes=(w)=>{ const f=fedTax(w,ss,status,useSenior,a>=65); const oh=state==='oh'?ohioTax(w,status):null;
+        const sd=oh?sdTax(oh.ti,a>=65,status):{tax:0,rate:0,name:''}; const ir=a>=65?irmaaMonthly(f.agi,status):{b:0,d:0};
+        return {f,oh,sd,cityTax:w*city,irm:(ir.b+ir.d)*12*people}; };
+      // what we need to pull
+      let irm=0,w=0,tx=null;
+      for(let i=0;i<3;i++){ w=solveW(need+medReal+irm,ss,status,state,city,useSenior,a>=65); tx=taxes(w); irm=tx.irm; }
+      // RMD may force more
+      const rmdNom=(balNom!==undefined&&a>=rmdAge)?balNom/divisor(a):0;
+      let forced=false, excess=0; const needNom=w*inflate;
+      if(rmdNom/inflate>w){ forced=true; w=rmdNom/inflate; tx=taxes(w); irm=tx.irm;
+        const spendable=w+ss-tx.f.tax-(tx.oh?tx.oh.tax:0)-tx.sd.tax-tx.cityTax-irm-medReal;
+        excess=Math.max(0,spendable-need); }
+      return {age:a,w,ss,medReal,irm,f:tx.f,oh:tx.oh,sd:tx.sd,cityTax:tx.cityTax,wNom:w*inflate,medNom:(medReal+irm)*inflate,ssNom:ss*inflate,inflate,
+              rmdNom,forced,excessNom:excess*inflate,needNom};
+    }
+
+    // drawdown from a given starting balance
+    function simulate(bStart){
+      const series=[]; let cur=bStart, side=0, lastsAge=null, medTotal=0, preTotal=0, irmaaYears=0;
+      let firstRmd=null, rmdExceedsAge=null, excessTotal=0;
+      const first=year(retAge,bStart);
+      for(let a=retAge;a<endAge;a++){
+        const yr=a===retAge?first:year(a,cur);
+        medTotal+=yr.medNom; if(a<65) preTotal+=yr.medNom; if(yr.irm>0) irmaaYears++;
+        if(yr.rmdNom>0&&!firstRmd) firstRmd=yr;
+        if(yr.forced){ if(rmdExceedsAge===null) rmdExceedsAge=a; excessTotal+=yr.excessNom; side+=yr.excessNom; }
+        let pull=yr.wNom;
+        if(pull>cur){ const short=pull-cur; pull=cur; side-=short; if(side<0&&lastsAge===null) lastsAge=a; side=Math.max(0,side); }
+        cur=(cur-pull)*(1+g); side*=(1+g);
+        series.push({age:a+1,bal:Math.max(0,cur),side});
+      }
+      return {series,first,lastsAge,endBal:Math.max(0,cur),endSide:side,medTotal,preTotal,irmaaYears,firstRmd,rmdExceedsAge,excessTotal};
+    }
+    // Coast FIRE: smallest retirement balance that lasts, then the first month the un-topped-up balance would reach it
+    let lo=0, hi=Math.max(b,1e5)*4;
+    for(let i=0;i<28;i++){ const mid=(lo+hi)/2; if(simulate(mid).lastsAge===null) hi=mid; else lo=mid; }
+    const fireNumber=hi;
+    let coastMonth=null;
+    for(let m=0;m<=months;m++){ if(path[m]*Math.pow(1+g,yrs-m/12)>=fireNumber){ coastMonth=m; break; } }
+    if($('coast').checked&&coastMonth!==null){ ({b,path}=grow(coastMonth)); }
+
+    const sim=simulate(b);
+    const series=[]; for(let y=0;y<=yrs;y++){ series.push({age:age+y,bal:path[Math.min(months,y*12)],side:0}); }
+    if(months%12) series.push({age:retAge,bal:b,side:0}); else series[series.length-1].bal=b;
+    series.push(...sim.series);
+    const {first,lastsAge,endBal,endSide,medTotal,preTotal,irmaaYears,firstRmd,rmdExceedsAge,excessTotal}=sim;
+    const wRet=first.wNom, rate=b>0?wRet/b:0;
+    const afterSS=year(Math.max(claimAge,65));
+
+    // hero
+    $('rate').textContent=pct(rate);
+    const retYear=Math.round(new Date().getFullYear()+yrs);
+    const gap=claimAge-retAge;
+    $('rateSub').textContent=gap>0
+      ?`${fmt(wRet)} from a ${fmt(b)} balance at ${retAge}, covering everything until Social Security starts at ${claimAge} (${retYear} dollars)`
+      :`${fmt(wRet)} from a ${fmt(b)} balance at ${retAge}, plus ${fmt(first.ssNom)} Social Security (${retYear} dollars)`;
+    $('balRet').textContent=fmt(b);
+    $('wdRet').textContent=fmt(wRet);
+    $('wdSS').textContent=fmt(afterSS.wNom)+(afterSS.age>retAge?` at ${afterSS.age}`:'');
+    $('ssBen').textContent=fmt(ssAnnual/12)+'/mo';
+    $('medFirst').textContent=fmt(first.medNom)+(retAge<65?' (pre-Medicare)':'');
+    $('rmdFirstLbl').textContent=`First RMD at ${rmdAge}`;
+    $('rmdFirst').textContent=firstRmd?fmt(firstRmd.rmdNom):'—';
+    const coastAge=coastMonth===null?null:age+coastMonth/12;
+    $('coastAge').textContent=coastMonth===null?`Not before ${retAge}`:coastMonth===0?'Already':`Age ${coastAge.toFixed(1)}`;
+
+    // Coast FIRE table
+    const todayNeed=fireNumber/Math.pow(1+g,yrs);
+    const now=new Date(); const coastDate=coastMonth===null?null:new Date(now.getFullYear(),now.getMonth()+coastMonth,1);
+    const cr=[[`Your number: balance needed at ${retAge} (${retYear} dollars)`,fmt(fireNumber),'total'],
+      [`Same in today's dollars`,fmt(fireNumber/Math.pow(1+infl,yrs)),'sub'],
+      [`Balance you'd need today to coast there with no contributions`,fmt(todayNeed),''],
+      [`Balance today`,fmt(bal0),'sub']];
+    if(coastMonth===0) cr.push(['You are past Coast FIRE already: contributions from here are extra cushion','','total']);
+    else if(coastMonth===null) cr.push([`At ${fmt(contrib)}/month you don't reach Coast FIRE before ${retAge}`,'','total'],[`Balance at ${retAge} vs your number`,`${fmt(b)} vs ${fmt(fireNumber)}`,'sub']);
+    else cr.push([`Coast FIRE reached`,`${coastDate.toLocaleString('en-US',{month:'short',year:'numeric'})}, age ${coastAge.toFixed(1)}`,'total'],
+      [`Balance at that point`,fmt(path[coastMonth]),'sub'],
+      [$('coast').checked?`Contributions stop there; balance at ${retAge}`:`If you stopped contributing then, balance at ${retAge}`,fmt(path[coastMonth]*Math.pow(1+g,yrs-coastMonth/12)),'sub']);
+    $('coastTable').innerHTML=cr.map(r=>`<tr><td class="${r[2]}">${r[0]}</td><td class="${r[2]}">${r[1]}</td></tr>`).join('');
+    $('lasts').textContent=lastsAge?`Until ${lastsAge}`:`Past ${endAge}`;
+    const v=$('verdict');
+    if(lastsAge){ v.className='verdict warn'; v.textContent=`Runs out at ${lastsAge}. Lower the target, retire later, or save more.`; }
+    else if(rate<=0.04){ v.className='verdict ok'; v.textContent=`Under the 4% guideline. Left at ${endAge}: ${fmt(endBal+endSide)} in ${new Date().getFullYear()+Math.round(endAge-age)} dollars${endSide>0?` (${fmt(endSide)} of it in the taxable account)`:''}.`; }
+    else { v.className='verdict warn'; v.textContent=`Above the 4% guideline, but lasts to ${endAge} at these assumptions. Little margin for a bad early market.`; }
+
+    // RMD table
+    const rr=[[`RMD age (born ${birthYear})`,String(rmdAge),'']];
+    if(firstRmd){
+      rr.push([`First RMD at ${rmdAge}: balance ${fmt(firstRmd.rmdNom*divisor(rmdAge))} ÷ ${divisor(rmdAge)}`,fmt(firstRmd.rmdNom),'total'],
+              [`Same amount in today's dollars`,fmt(firstRmd.rmdNom/firstRmd.inflate),'sub'],
+              [`Withdrawal you'd otherwise need that year`,fmt(firstRmd.needNom),'sub']);
+      rr.push([rmdExceedsAge!==null?`RMD exceeds what you need starting at`:'RMD never exceeds what you need',rmdExceedsAge!==null?String(rmdExceedsAge):'—','']);
+      if(excessTotal>0) rr.push([`Excess RMDs moved to a taxable account, ${rmdExceedsAge}–${endAge}`,fmt(excessTotal),''],
+                                 [`Taxable account balance at ${endAge}`,fmt(endSide),'']);
+      rr.push([`Years with an IRMAA surcharge`,String(irmaaYears),'']);
+    } else rr.push([`No RMDs before ${endAge}`,'—','']);
+    $('rmdTable').innerHTML=rr.map(r=>`<tr><td class="${r[2]}">${r[0]}</td><td class="${r[2]}">${r[1]}</td></tr>`).join('');
+
+    // healthcare table (today's $ for the annual figures)
+    const mrows=[];
+    if(retAge<65) mrows.push([`Ages ${retAge}–65, before Medicare (per year, today's $)`,fmt(preMed),'total'],
+      [`Total for those ${65-retAge} years, in future dollars`,fmt(preTotal),'sub']);
+    mrows.push([`Medicare from 65 (per year, today's $)`,fmt(medBase),'total'],
+      [`Part B ${fmt(partB)} + Part D ${fmt(partD)} + supplement ${fmt(medigap)} per month`,fmt((partB+partD+medigap)*12*people),'sub'],
+      ['Out-of-pocket',fmt(medOop*people),'sub']);
+    mrows.push([irmaaYears?`IRMAA surcharge applies in ${irmaaYears} of your Medicare years (often driven by RMDs)`:'No IRMAA surcharge at this income',irmaaYears?fmt(afterSS.irm||first.irm)+'/yr':'—','']);
+    mrows.push([`All healthcare, ${retAge} to ${endAge}, in future dollars`,fmt(medTotal),'total']);
+    $('medTable').innerHTML=mrows.map(r=>`<tr><td class="${r[2]}">${r[0]}</td><td class="${r[2]}">${r[1]}</td></tr>`).join('');
+
+    // first-year budget (today's $)
+    const f=first.f, oh=first.oh, cityTax=first.cityTax;
+    let rows=[
+      ['401k withdrawal (gross)',fmt(first.w),'total'],
+      ['Social Security',first.ss?fmt(first.ss):'not yet claimed',''],
+      ['Portion of Social Security that is taxable',fmt(f.tss),'sub'],
+      ['Adjusted gross income',fmt(f.agi),'sub'],
+      ['Deductions'+(f.senior?' (incl. senior deduction)':''),'−'+fmt(f.ded),'sub'],
+      ['Federal taxable income',fmt(f.ti),'sub'],
+      ['Federal tax','−'+fmt(f.tax),''],
+    ];
+    if(oh) rows.push(['Ohio tax (after '+fmt(oh.credits)+' in credits)','−'+fmt(oh.tax),'']);
+    if(first.sd.rate>0) rows.push([`${first.sd.name} school district tax, ${(first.sd.rate*100).toFixed(2).replace(/\.?0+$/,'')}% of Ohio taxable income`,'−'+fmt(first.sd.tax),'']);
+    else if($('sd').value) rows.push([`${first.sd.name} school district tax (earned income base)`,'$0','']);
+    if(cityTax>0) rows.push(['City tax','−'+fmt(cityTax),'']);
+    rows.push([(retAge<65?'Health insurance and medical, before Medicare':'Medicare premiums and medical')+' (grown at medical inflation, in today\'s purchasing power)','−'+fmt(first.medReal+first.irm),'']);
+    rows.push(['Left to spend',fmt(first.w+first.ss-f.tax-(oh?oh.tax:0)-first.sd.tax-cityTax-first.medReal-first.irm),'total']);
+    if(gap>0) rows.push([`Withdrawal drops to about ${fmt(afterSS.w)} (today's $) once Social Security starts at ${afterSS.age}`,'','sub']);
+    $('taxTable').innerHTML=rows.map(r=>`<tr><td class="${r[2]}">${r[0]}</td><td class="${r[2]}">${r[1]}</td></tr>`).join('');
+
+    // growth table
+    $('growTable').innerHTML=[
+      ['Balance today',fmt(bal0),''],
+      [`Growth over ${yrs.toFixed(1)} years at ${(g*100).toFixed(1)}%`,'+'+fmt(growthOnly-bal0),''],
+      [`Contributions of ${fmt(contrib)}/month${$('coast').checked&&coastMonth?` until age ${coastAge.toFixed(1)}`:''}, with growth`,'+'+fmt(b-growthOnly),''],
+      [`Balance at ${retAge}`,fmt(b),'total'],
+      [`First-year withdrawal in today's dollars`,fmt(first.w),''],
+      [`Same withdrawal in ${retAge}-year dollars (${(infl*100).toFixed(1)}% inflation)`,fmt(wRet),''],
+    ].map(r=>`<tr><td class="${r[2]}">${r[0]}</td><td class="${r[2]}">${r[1]}</td></tr>`).join('');
+
+    draw(series,retAge,age,endAge,claimAge,coastAge);
+  }
+
+  function draw(series,retAge,age,endAge,claimAge,coastAge){
+    const c=$('chart'), dpr=window.devicePixelRatio||1;
+    const W=c.clientWidth, H=220; c.width=W*dpr; c.height=H*dpr;
+    const ctx=c.getContext('2d'); ctx.scale(dpr,dpr); ctx.clearRect(0,0,W,H);
+    const padL=44,padR=8,padT=10,padB=24;
+    const maxBal=Math.max(...series.map(p=>Math.max(p.bal,p.side||0)))*1.08||1;
+    const hasSide=series.some(p=>p.side>0); $('sideLegend').hidden=!hasSide;
+    const x=a=>padL+(a-age)/(endAge-age)*(W-padL-padR);
+    const y=v=>padT+(1-v/maxBal)*(H-padT-padB);
+    const css=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+    ctx.strokeStyle=css('--line'); ctx.lineWidth=1; ctx.fillStyle=css('--muted'); ctx.font='11px system-ui,sans-serif';
+    const steps=4;
+    for(let i=0;i<=steps;i++){ const v=maxBal/steps*i; ctx.beginPath(); ctx.moveTo(padL,y(v)); ctx.lineTo(W-padR,y(v)); ctx.stroke();
+      ctx.textAlign='right'; ctx.fillText((v/1e6).toFixed(1)+'M',padL-6,y(v)+4); }
+    ctx.textAlign='center';
+    for(let a=Math.ceil(age/5)*5;a<=endAge;a+=5){ ctx.fillText(a,x(a),H-6); }
+    // retirement marker
+    ctx.setLineDash([3,3]); ctx.strokeStyle=css('--muted'); ctx.beginPath(); ctx.moveTo(x(retAge),padT); ctx.lineTo(x(retAge),H-padB); ctx.stroke(); ctx.setLineDash([]);
+    ctx.textAlign='left'; ctx.fillText('retire',x(retAge)+4,padT+10);
+    if(coastAge&&coastAge>age&&coastAge<retAge){ ctx.setLineDash([3,3]); ctx.strokeStyle=css('--green'); ctx.beginPath(); ctx.moveTo(x(coastAge),padT); ctx.lineTo(x(coastAge),H-padB); ctx.stroke(); ctx.setLineDash([]); ctx.fillStyle=css('--green'); ctx.fillText('coast',x(coastAge)+4,padT+10); ctx.fillStyle=css('--muted'); ctx.strokeStyle=css('--muted'); }
+    if(claimAge>retAge){ ctx.setLineDash([3,3]); ctx.beginPath(); ctx.moveTo(x(claimAge),padT); ctx.lineTo(x(claimAge),H-padB); ctx.stroke(); ctx.setLineDash([]); ctx.fillText('SS starts',x(claimAge)+4,padT+22); }
+    // fills + lines
+    const seg=(pts,color,soft)=>{ if(pts.length<2) return;
+      ctx.beginPath(); ctx.moveTo(x(pts[0].age),y(0)); pts.forEach(p=>ctx.lineTo(x(p.age),y(p.bal))); ctx.lineTo(x(pts[pts.length-1].age),y(0)); ctx.closePath(); ctx.fillStyle=soft; ctx.fill();
+      ctx.beginPath(); pts.forEach((p,i)=>i?ctx.lineTo(x(p.age),y(p.bal)):ctx.moveTo(x(p.age),y(p.bal))); ctx.strokeStyle=color; ctx.lineWidth=2.5; ctx.lineJoin='round'; ctx.stroke(); };
+    seg(series.filter(p=>p.age<=retAge),css('--green'),css('--green-soft'));
+    seg(series.filter(p=>p.age>=retAge),css('--amber'),css('--amber-soft'));
+    if(hasSide){ const pts=series.filter(p=>p.side>0); ctx.beginPath(); pts.forEach((p,i)=>i?ctx.lineTo(x(p.age),y(p.side)):ctx.moveTo(x(p.age),y(p.side)));
+      ctx.setLineDash([4,3]); ctx.strokeStyle=css('--muted'); ctx.lineWidth=2; ctx.stroke(); ctx.setLineDash([]); }
+  }
+
+  (function(){
+    const mq=window.matchMedia('(prefers-color-scheme: dark)'); let mode='auto';
+    const apply=()=>{ const dark=mode==='dark'||(mode==='auto'&&mq.matches);
+      document.documentElement.dataset.theme=dark?'dark':'light';
+      document.querySelectorAll('#theme button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.v===mode)); calc(); };
+    document.querySelectorAll('#theme button').forEach(b=>b.addEventListener('click',()=>{ mode=b.dataset.v; apply(); }));
+    mq.addEventListener('change',()=>{ if(mode==='auto') apply(); });
+    window.__applyTheme=apply;
+  })();
+  document.querySelectorAll('#needPer button').forEach(bt=>bt.addEventListener('click',()=>{
+    if(bt.dataset.v===needPer) return;
+    const el=$('need'), v=+el.value; needPer=bt.dataset.v;
+    el.value=needPer==='month'?Math.round(v/12):Math.round(v*12);
+    document.querySelectorAll('#needPer button').forEach(b=>b.setAttribute('aria-pressed',b===bt));
+    $('needHint').textContent=(needPer==='month'?`${fmt(+el.value*12)} per year. `:'')+'Spendable, after income taxes. Health insurance and medical costs are added on top, from the section below.';
+    calc(); }));
+  document.querySelectorAll('#status button').forEach(bt=>bt.addEventListener('click',()=>{
+    status=bt.dataset.v; document.querySelectorAll('#status button').forEach(b=>b.setAttribute('aria-pressed',b===bt)); calc(); }));
+  document.querySelectorAll('input[type=number]').forEach(el=>{ const sel=()=>{ requestAnimationFrame(()=>el.select()); };
+    el.addEventListener('focus',sel); el.addEventListener('click',e=>{ if(el.selectionStart===el.selectionEnd) sel(); }); });
+  let tmr; const calcSoon=()=>{ clearTimeout(tmr); tmr=setTimeout(calc,120); };
+  document.querySelectorAll('input,select').forEach(el=>el.addEventListener('input',calcSoon));
+  $('need').addEventListener('input',()=>{ if(needPer==='month') $('needHint').textContent=`${fmt(+$('need').value*12)} per year. Spendable, after income taxes. Health insurance and medical costs are added on top, from the section below.`; });
+  window.addEventListener('resize',calc);
+  window.__applyTheme();
+})();
+</script>
+</body>
+</html>
