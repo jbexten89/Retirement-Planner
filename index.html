@@ -26,6 +26,8 @@
   .theme{display:flex;border:1px solid var(--line);border-radius:7px;overflow:hidden;flex-shrink:0;margin-top:2px}
   .theme button{font:inherit;font-size:12.5px;padding:5px 9px;border:0;background:var(--panel);color:var(--ink);cursor:pointer}
   .theme button[aria-pressed=true]{background:var(--ink);color:var(--paper)}
+  .reset{font:inherit;font-size:12.5px;padding:5px 9px;border:1px solid var(--line);border-radius:7px;background:var(--panel);color:var(--muted);cursor:pointer;margin-top:2px}
+  .reset:hover{color:var(--ink)}
   *{box-sizing:border-box}
   html{-webkit-text-size-adjust:100%}
   body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.45 "Avenir Next","Segoe UI",system-ui,-apple-system,sans-serif;font-variant-numeric:tabular-nums}
@@ -83,8 +85,8 @@
 <body>
 <main>
   <div class="topbar"><h1>Retirement planner</h1>
-    <div class="theme" id="theme" role="group" aria-label="Appearance"><button data-v="light">Light</button><button data-v="auto">Auto</button><button data-v="dark">Dark</button></div></div>
-  <p class="sub">Enter your own numbers below. The app grows your 401k to retirement, adds healthcare, grosses up for federal and Ohio taxes, then draws it down. Everything updates as you type.</p>
+    <div style="display:flex;gap:8px;align-items:center;flex-shrink:0"><button id="reset" class="reset" type="button">Reset to defaults</button><div class="theme" id="theme" role="group" aria-label="Appearance"><button data-v="light">Light</button><button data-v="auto">Auto</button><button data-v="dark">Dark</button></div></div></div>
+  <p class="sub">Enter your own numbers below. The app grows your 401k to retirement, adds healthcare, grosses up for federal and Ohio taxes, then draws it down. Everything updates as you type, and your values are kept in this browser for next time.</p>
 
   <section class="hero" aria-live="polite">
     <p class="lead">401k withdrawal rate in your first year of retirement</p>
@@ -272,7 +274,7 @@ const SD=[["3301","Ada EVSD","Hardin, Hancock",0.015,"T"],["2301","Amanda-Clearc
     return {b,d};
   }
 
-  function calc(){
+  let calc=function(){
     const age=+$('age').value, retAge=+$('retAge').value, bal0=+$('bal').value, contrib=+$('contrib').value;
     const g=+$('growth').value/100, infl=+$('infl').value/100, need=+$('need').value*(needPer==='month'?12:1);
     const ssAt=+$('ssAt').value, claimAge=Math.max(+$('claimAge').value, retAge);
@@ -440,7 +442,7 @@ const SD=[["3301","Ada EVSD","Hardin, Hancock",0.015,"T"],["2301","Amanda-Clearc
     ].map(r=>`<tr><td class="${r[2]}">${r[0]}</td><td class="${r[2]}">${r[1]}</td></tr>`).join('');
 
     draw(series,retAge,age,endAge,claimAge,coastAge);
-  }
+  };
 
   function draw(series,retAge,age,endAge,claimAge,coastAge){
     const c=$('chart'), dpr=window.devicePixelRatio||1;
@@ -480,7 +482,7 @@ const SD=[["3301","Ada EVSD","Hardin, Hancock",0.015,"T"],["2301","Amanda-Clearc
       document.querySelectorAll('#theme button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.v===mode)); calc(); };
     document.querySelectorAll('#theme button').forEach(b=>b.addEventListener('click',()=>{ mode=b.dataset.v; apply(); }));
     mq.addEventListener('change',()=>{ if(mode==='auto') apply(); });
-    window.__applyTheme=apply;
+    window.__applyTheme=apply; window.__theme={get:()=>mode,set:m=>{mode=m;}};
   })();
   document.querySelectorAll('#needPer button').forEach(bt=>bt.addEventListener('click',()=>{
     if(bt.dataset.v===needPer) return;
@@ -496,6 +498,22 @@ const SD=[["3301","Ada EVSD","Hardin, Hancock",0.015,"T"],["2301","Amanda-Clearc
   let tmr; const calcSoon=()=>{ clearTimeout(tmr); tmr=setTimeout(calc,120); };
   document.querySelectorAll('input,select').forEach(el=>el.addEventListener('input',calcSoon));
   $('need').addEventListener('input',()=>{ if(needPer==='month') $('needHint').textContent=`${fmt(+$('need').value*12)} per year. Spendable, after income taxes. Health insurance and medical costs are added on top, from the section below.`; });
+  // ---- remember values between visits (this browser only) ----
+  const KEY='retirement-planner-v1';
+  const FIELDS=['age','retAge','bal','contrib','coast','growth','infl','need','ss','ssAt','claimAge','state','cityMode','city','sd','senior','endAge','medInfl','preMed','preOop','partB','partD','medigap','medOop','people'];
+  function save(){ try{ const o={}; FIELDS.forEach(id=>{ const el=$(id); o[id]=el.type==='checkbox'?el.checked:el.value; });
+      o._status=status; o._needPer=needPer; o._theme=window.__theme.get(); localStorage.setItem(KEY,JSON.stringify(o)); }catch(e){} }
+  function restore(){ let o=null; try{ o=JSON.parse(localStorage.getItem(KEY)||'null'); }catch(e){} if(!o) return;
+    FIELDS.forEach(id=>{ if(!(id in o)) return; const el=$(id); if(el.type==='checkbox') el.checked=!!o[id]; else el.value=o[id]; });
+    if(o._status){ status=o._status; document.querySelectorAll('#status button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.v===status)); }
+    if(o._needPer){ needPer=o._needPer; document.querySelectorAll('#needPer button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.v===needPer));
+      if(needPer==='month') $('needHint').textContent=`${fmt(+$('need').value*12)} per year. Spendable, after income taxes. Health insurance and medical costs are added on top, from the section below.`; }
+    if(o._theme) window.__theme.set(o._theme);
+    $('cityRateRow').hidden=$('cityMode').value!=='rate';
+    if($('sd').value!==o.sd) $('sd').value=''; }
+  const _calc=calc; calc=function(){ _calc(); save(); };
+  $('reset').addEventListener('click',()=>{ try{ localStorage.removeItem(KEY); }catch(e){} location.reload(); });
+  restore();
   window.addEventListener('resize',calc);
   window.__applyTheme();
 })();
