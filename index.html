@@ -102,6 +102,7 @@
       <div><b id="wdSS">—</b><span>Withdrawal once SS starts</span></div>
       <div><b id="ssBen">—</b><span>Social Security at claim age</span></div>
       <div><b id="medFirst">—</b><span>Healthcare, first year</span></div>
+      <div><b id="hsaRet">—</b><span id="hsaRetLbl">HSA at retirement</span></div>
       <div><b id="rmdFirst">—</b><span id="rmdFirstLbl">First RMD</span></div>
       <div><b id="coastAge">—</b><span>Coast FIRE reached</span></div>
       <div><b id="lasts">—</b><span>Money lasts</span></div>
@@ -154,13 +155,18 @@
     <div class="field"><label for="medigap">Medigap or Advantage plan, monthly</label><input id="medigap" type="number" step="5" value="200"><span class="hint">Plan G for a new 65-year-old in Ohio is typically $150–250. Enter 0 for a $0-premium Advantage plan and raise out-of-pocket instead.</span></div>
     <div class="field"><label for="medOop">Medicare out-of-pocket, yearly</label><input id="medOop" type="number" step="250" value="2500"><span class="hint">Deductibles, copays, dental, vision, hearing.</span></div>
     <div class="field"><label for="people">People covered</label><input id="people" type="number" step="1" min="1" max="2" value="1"></div>
+    <h2 style="margin-top:18px">Health Savings Account</h2>
+    <div class="field"><label for="hsaBal">HSA balance today</label><input id="hsaBal" type="number" step="500" value="0"></div>
+    <div class="field"><label for="hsaContrib">HSA contribution, monthly</label><input id="hsaContrib" type="number" step="25" value="0"><span class="hint">Include any employer deposit. Contributions stop at 65 when Medicare starts, or at retirement if earlier. The 2026 limit is $4,400 single / $8,750 family, plus $1,000 catch-up at 55+.</span></div>
+    <div class="field"><label for="hsaGrowth">HSA growth rate %</label><input id="hsaGrowth" type="number" step="0.5" value="6"><span class="hint">Only if invested. Use ~1% for cash.</span></div>
+    <div class="field"><label class="check"><input id="hsaUse" type="checkbox" checked> Pay healthcare from the HSA first</label><span class="hint">Medicare premiums and out-of-pocket costs are qualified expenses, so this money comes out tax-free. The 401k covers only what the HSA can't.</span></div>
     <table id="medTable" style="margin-top:12px"></table>
   </section>
 
   <section>
     <h2>First-year budget (today's dollars)</h2>
     <table id="taxTable"></table>
-    <p class="note">Withdrawal covers spending, healthcare, and taxes. Uses 2026 federal brackets, standard deduction, and the over-65 add-on. Ohio: flat 2.75% above $26,050, personal exemption, retirement income credit and senior credit. Social Security is not taxed by Ohio or by school districts. School district rates are the Ohio Department of Taxation's 2026 list; check your district's current rate since levies expire and renew.</p>
+    <p class="note">Withdrawal covers spending, healthcare not paid by the HSA, and taxes. Uses 2026 federal brackets, standard deduction, and the over-65 add-on. Ohio: flat 2.75% above $26,050, personal exemption, retirement income credit and senior credit. Social Security is not taxed by Ohio or by school districts. School district rates are the Ohio Department of Taxation's 2026 list; check your district's current rate since levies expire and renew.</p>
   </section>
 
   <section>
@@ -184,7 +190,7 @@
     <details>
       <summary>How this works and what it leaves out</summary>
       <p>Taxes are solved in today's dollars, then the resulting withdrawal is inflated to the retirement year (brackets index with inflation, and Social Security gets cost-of-living adjustments, so this is a fair approximation). In drawdown, withdrawals rise with inflation each year and the remaining balance keeps growing at the rate you set.</p>
-      <p>Healthcare costs grow at their own inflation rate and are added to spending each year. Medicare IRMAA surcharges use 2026 brackets indexed to inflation and are based on the same year's income (in reality they look back two years). Not modeled: Roth conversions, taxes on growth inside the taxable account, long-term care, sequence-of-returns risk, or any other income. Tax law in your retirement years will differ from 2026. This is a planning estimate, not advice.</p>
+      <p>Healthcare costs grow at their own inflation rate and are added to spending each year. Medicare IRMAA surcharges use 2026 brackets indexed to inflation and are based on the same year's income (in reality they look back two years). Not modeled: Roth conversions, taxes on growth inside the taxable account, non-medical HSA withdrawals, long-term care, sequence-of-returns risk, or any other income. Tax law in your retirement years will differ from 2026. This is a planning estimate, not advice.</p>
     </details>
   </section>
 </main>
@@ -287,6 +293,7 @@ const SD=[["3301","Ada EVSD","Hardin, Hancock",0.015,"T"],["2301","Amanda-Clearc
     const preMed=(+$('preMed').value*12+ +$('preOop').value)*people;
     const partB=+$('partB').value, partD=+$('partD').value, medigap=+$('medigap').value, medOop=+$('medOop').value;
     const medBase=((partB+partD+medigap)*12+medOop)*people;
+    const hsa0=+$('hsaBal').value, hsaC=+$('hsaContrib').value, hg=+$('hsaGrowth').value/100, hsaUse=$('hsaUse').checked;
     const yrs=Math.max(0,retAge-age);
 
     // growth phase, monthly steps (contributions may stop at the coast age)
@@ -295,16 +302,20 @@ const SD=[["3301","Ada EVSD","Hardin, Hancock",0.015,"T"],["2301","Amanda-Clearc
     function grow(stopMonth){ let x=bal0; const path=[bal0];
       for(let m=0;m<months;m++){ x=x*(1+mr)+(m<stopMonth?contrib:0); path.push(x); } return {b:x,path}; }
     let {b,path}=grow(Infinity);
+    // HSA grows until retirement; contributions stop at the earlier of retirement and 65
+    const hmr=Math.pow(1+hg,1/12)-1, hsaStop=Math.round(Math.max(0,Math.min(retAge,65)-age)*12);
+    let hsaAtRet=hsa0; for(let m=0;m<months;m++){ hsaAtRet=hsaAtRet*(1+hmr)+(m<hsaStop?hsaC:0); }
     const fromContrib=b-growthOnly;
 
     const birthYear=new Date().getFullYear()-Math.floor(age);
     const rmdAge=birthYear>=1960?75:73;
 
     // one retirement year. Money amounts inside are today's dollars unless suffixed Nom.
-    function year(a,balNom){
+    function year(a,balNom,hsaCover=0){
       const t=a-age, inflate=Math.pow(1+infl,t);
       const ss=a>=claimAge?ssAnnual:0;
-      const medReal=(a<65?preMed:medBase)*Math.pow((1+medInfl)/(1+infl),t);
+      const medFull=(a<65?preMed:medBase)*Math.pow((1+medInfl)/(1+infl),t);
+      const medReal=Math.max(0,medFull-hsaCover);
       const taxes=(w)=>{ const f=fedTax(w,ss,status,useSenior,a>=65); const oh=state==='oh'?ohioTax(w,status):null;
         const sd=oh?sdTax(oh.ti,a>=65,status):{tax:0,rate:0,name:''}; const ir=a>=65?irmaaMonthly(f.agi,status):{b:0,d:0};
         return {f,oh,sd,cityTax:w*city,irm:(ir.b+ir.d)*12*people}; };
@@ -317,17 +328,22 @@ const SD=[["3301","Ada EVSD","Hardin, Hancock",0.015,"T"],["2301","Amanda-Clearc
       if(rmdNom/inflate>w){ forced=true; w=rmdNom/inflate; tx=taxes(w); irm=tx.irm;
         const spendable=w+ss-tx.f.tax-(tx.oh?tx.oh.tax:0)-tx.sd.tax-tx.cityTax-irm-medReal;
         excess=Math.max(0,spendable-need); }
-      return {age:a,w,ss,medReal,irm,f:tx.f,oh:tx.oh,sd:tx.sd,cityTax:tx.cityTax,wNom:w*inflate,medNom:(medReal+irm)*inflate,ssNom:ss*inflate,inflate,
+      return {age:a,w,ss,medReal,medFull,hsaCover,irm,f:tx.f,oh:tx.oh,sd:tx.sd,cityTax:tx.cityTax,wNom:w*inflate,medNom:(medFull+irm)*inflate,hsaNom:hsaCover*inflate,ssNom:ss*inflate,inflate,
               rmdNom,forced,excessNom:excess*inflate,needNom};
     }
 
     // drawdown from a given starting balance
     function simulate(bStart){
       const series=[]; let cur=bStart, side=0, lastsAge=null, medTotal=0, preTotal=0, irmaaYears=0;
-      let firstRmd=null, rmdExceedsAge=null, excessTotal=0;
-      const first=year(retAge,bStart);
+      let firstRmd=null, rmdExceedsAge=null, excessTotal=0, hsa=hsaAtRet, hsaPaid=0, hsaRunsOut=null, first=null;
       for(let a=retAge;a<endAge;a++){
-        const yr=a===retAge?first:year(a,cur);
+        const t=a-age, inflate=Math.pow(1+infl,t);
+        // how much of this year's healthcare the HSA can cover (today's $)
+        const medFull=(a<65?preMed:medBase)*Math.pow((1+medInfl)/(1+infl),t);
+        const cover=hsaUse?Math.min(medFull,hsa/inflate):0;
+        const yr=year(a,cur,cover); if(a===retAge) first=yr;
+        hsa=(hsa-cover*inflate)*(1+hg); hsaPaid+=cover*inflate;
+        if(hsaUse&&hsaAtRet>0&&cover<medFull&&hsaRunsOut===null) hsaRunsOut=a;
         medTotal+=yr.medNom; if(a<65) preTotal+=yr.medNom; if(yr.irm>0) irmaaYears++;
         if(yr.rmdNom>0&&!firstRmd) firstRmd=yr;
         if(yr.forced){ if(rmdExceedsAge===null) rmdExceedsAge=a; excessTotal+=yr.excessNom; side+=yr.excessNom; }
@@ -336,7 +352,7 @@ const SD=[["3301","Ada EVSD","Hardin, Hancock",0.015,"T"],["2301","Amanda-Clearc
         cur=(cur-pull)*(1+g); side*=(1+g);
         series.push({age:a+1,bal:Math.max(0,cur),side});
       }
-      return {series,first,lastsAge,endBal:Math.max(0,cur),endSide:side,medTotal,preTotal,irmaaYears,firstRmd,rmdExceedsAge,excessTotal};
+      return {series,first,lastsAge,endBal:Math.max(0,cur),endSide:side,medTotal,preTotal,irmaaYears,firstRmd,rmdExceedsAge,excessTotal,hsaPaid,hsaRunsOut,hsaEnd:Math.max(0,hsa)};
     }
     // Coast FIRE: smallest retirement balance that lasts, then the first month the un-topped-up balance would reach it
     let lo=0, hi=Math.max(b,1e5)*4;
@@ -350,7 +366,7 @@ const SD=[["3301","Ada EVSD","Hardin, Hancock",0.015,"T"],["2301","Amanda-Clearc
     const series=[]; for(let y=0;y<=yrs;y++){ series.push({age:age+y,bal:path[Math.min(months,y*12)],side:0}); }
     if(months%12) series.push({age:retAge,bal:b,side:0}); else series[series.length-1].bal=b;
     series.push(...sim.series);
-    const {first,lastsAge,endBal,endSide,medTotal,preTotal,irmaaYears,firstRmd,rmdExceedsAge,excessTotal}=sim;
+    const {first,lastsAge,endBal,endSide,medTotal,preTotal,irmaaYears,firstRmd,rmdExceedsAge,excessTotal,hsaPaid,hsaRunsOut,hsaEnd}=sim;
     const wRet=first.wNom, rate=b>0?wRet/b:0;
     const afterSS=year(Math.max(claimAge,65));
 
@@ -366,6 +382,8 @@ const SD=[["3301","Ada EVSD","Hardin, Hancock",0.015,"T"],["2301","Amanda-Clearc
     $('wdSS').textContent=fmt(afterSS.wNom)+(afterSS.age>retAge?` at ${afterSS.age}`:'');
     $('ssBen').textContent=fmt(ssAnnual/12)+'/mo';
     $('medFirst').textContent=fmt(first.medNom)+(retAge<65?' (pre-Medicare)':'');
+    $('hsaRetLbl').textContent=`HSA at ${retAge}`;
+    $('hsaRet').textContent=hsaAtRet>0?fmt(hsaAtRet):'—';
     $('rmdFirstLbl').textContent=`First RMD at ${rmdAge}`;
     $('rmdFirst').textContent=firstRmd?fmt(firstRmd.rmdNom):'—';
     const coastAge=coastMonth===null?null:age+coastMonth/12;
@@ -412,6 +430,13 @@ const SD=[["3301","Ada EVSD","Hardin, Hancock",0.015,"T"],["2301","Amanda-Clearc
       ['Out-of-pocket',fmt(medOop*people),'sub']);
     mrows.push([irmaaYears?`IRMAA surcharge applies in ${irmaaYears} of your Medicare years (often driven by RMDs)`:'No IRMAA surcharge at this income',irmaaYears?fmt(afterSS.irm||first.irm)+'/yr':'—','']);
     mrows.push([`All healthcare, ${retAge} to ${endAge}, in future dollars`,fmt(medTotal),'total']);
+    if(hsaAtRet>0){
+      mrows.push([`HSA balance at ${retAge} (${fmt(hsa0)} today + ${fmt(hsaC)}/mo until ${Math.min(retAge,65)}, at ${(hg*100).toFixed(1)}%)`,fmt(hsaAtRet),'total']);
+      if(hsaUse){ mrows.push([`Paid from the HSA, tax-free`,fmt(hsaPaid),'sub'],
+        [hsaRunsOut!==null?`HSA runs out at`:`HSA still has money at ${endAge}`,hsaRunsOut!==null?String(hsaRunsOut):fmt(hsaEnd),'sub'],
+        [`Still paid from the 401k`,fmt(medTotal-hsaPaid),'sub']); }
+      else mrows.push(['HSA not used for healthcare in this plan','','sub']);
+    }
     $('medTable').innerHTML=mrows.map(r=>`<tr><td class="${r[2]}">${r[0]}</td><td class="${r[2]}">${r[1]}</td></tr>`).join('');
 
     // first-year budget (today's $)
@@ -429,7 +454,8 @@ const SD=[["3301","Ada EVSD","Hardin, Hancock",0.015,"T"],["2301","Amanda-Clearc
     if(first.sd.rate>0) rows.push([`${first.sd.name} school district tax, ${(first.sd.rate*100).toFixed(2).replace(/\.?0+$/,'')}% of Ohio taxable income`,'−'+fmt(first.sd.tax),'']);
     else if($('sd').value) rows.push([`${first.sd.name} school district tax (earned income base)`,'$0','']);
     if(cityTax>0) rows.push(['City tax','−'+fmt(cityTax),'']);
-    rows.push([(retAge<65?'Health insurance and medical, before Medicare':'Medicare premiums and medical')+' (grown at medical inflation, in today\'s purchasing power)','−'+fmt(first.medReal+first.irm),'']);
+    rows.push([(retAge<65?'Health insurance and medical, before Medicare':'Medicare premiums and medical')+' (grown at medical inflation, in today\'s purchasing power)','−'+fmt(first.medFull+first.irm),'']);
+    if(first.hsaCover>0) rows.push(['Paid from HSA, tax-free','+'+fmt(first.hsaCover),'sub']);
     rows.push(['Left to spend',fmt(first.w+first.ss-f.tax-(oh?oh.tax:0)-first.sd.tax-cityTax-first.medReal-first.irm),'total']);
     if(gap>0) rows.push([`Withdrawal drops to about ${fmt(afterSS.w)} (today's $) once Social Security starts at ${afterSS.age}`,'','sub']);
     $('taxTable').innerHTML=rows.map(r=>`<tr><td class="${r[2]}">${r[0]}</td><td class="${r[2]}">${r[1]}</td></tr>`).join('');
@@ -503,7 +529,7 @@ const SD=[["3301","Ada EVSD","Hardin, Hancock",0.015,"T"],["2301","Amanda-Clearc
   $('need').addEventListener('input',()=>{ if(needPer==='month') $('needHint').textContent=`${fmt(+$('need').value*12)} per year. Spendable, after income taxes. Health insurance and medical costs are added on top, from the section below.`; });
   // ---- remember values between visits (this browser only) ----
   const KEY='retirement-planner-v1';
-  const FIELDS=['age','retAge','bal','contrib','coast','growth','infl','need','ss','ssAt','claimAge','state','cityMode','city','sd','senior','endAge','medInfl','preMed','preOop','partB','partD','medigap','medOop','people'];
+  const FIELDS=['age','retAge','bal','contrib','coast','growth','infl','need','ss','ssAt','claimAge','state','cityMode','city','sd','senior','endAge','medInfl','preMed','preOop','partB','partD','medigap','medOop','people','hsaBal','hsaContrib','hsaGrowth','hsaUse'];
   function save(){ try{ const o={}; FIELDS.forEach(id=>{ const el=$(id); o[id]=el.type==='checkbox'?el.checked:el.value; });
       o._status=status; o._needPer=needPer; o._theme=window.__theme.get(); localStorage.setItem(KEY,JSON.stringify(o)); }catch(e){} }
   function restore(){ let o=null; try{ o=JSON.parse(localStorage.getItem(KEY)||'null'); }catch(e){} if(!o) return;
