@@ -13,13 +13,13 @@
 <style>
   :root{
     --paper:#EDF0F3; --panel:#FFFFFF; --ink:#1B2836; --muted:#5C6B7A;
-    --line:#D3DAE1; --green:#0E6B54; --green-soft:#DDEFE8; --amber:#A8641A; --amber-soft:#F6E9D6;
+    --line:#D3DAE1; --green:#0E6B54; --green-soft:#DDEFE8; --amber:#A8641A; --amber-soft:#F6E9D6; --blue:#2563EB; --blue-soft:#DBE7FD; --violet:#7C3AED; --violet-soft:#EADDFD; --rose:#C2416B; --rose-soft:#FADDE7;
     --radius:10px;
     --hero:#1B2836; --hero-ink:#FFFFFF; --hero-line:rgba(255,255,255,.18); --hero-chip:rgba(255,255,255,.12);
   }
   :root[data-theme=dark]{
     --paper:#07080A; --panel:#111317; --ink:#E4E6EA; --muted:#8B919B;
-    --line:#22262D; --green:#3CC79A; --green-soft:#10302A; --amber:#E3A04F; --amber-soft:#3A2B16;
+    --line:#22262D; --green:#3CC79A; --green-soft:#10302A; --amber:#E3A04F; --amber-soft:#3A2B16; --blue:#5B9CFF; --blue-soft:#12233F; --violet:#B08CFF; --violet-soft:#241B3D; --rose:#F07CA0; --rose-soft:#3B1A26;
     --hero:#111317; --hero-ink:#F2F5F8; --hero-line:rgba(255,255,255,.12); --hero-chip:rgba(60,199,154,.14);
   }
   .hdr{display:flex;align-items:center;gap:10px;margin-bottom:14px}
@@ -49,21 +49,34 @@
   h1{font-size:22px;font-weight:600;margin:0 0 4px}
   .sub{color:var(--muted);margin:0 0 18px;font-size:14px}
   section{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:16px;margin-bottom:14px}
-  h2{font-size:15px;font-weight:600;margin:0 0 12px}
+  h2{font-size:15px;font-weight:600;margin:0 0 12px;display:flex;align-items:center;gap:9px}
+  h2::before{content:'';width:4px;height:16px;border-radius:2px;background:var(--acc,var(--green));flex-shrink:0}
+  section[data-c=amber]{--acc:var(--amber)} section[data-c=blue]{--acc:var(--blue)} section[data-c=violet]{--acc:var(--violet)} section[data-c=rose]{--acc:var(--rose)} section[data-c=muted]{--acc:var(--muted)}
+  h2 .sub2{font-weight:400;color:var(--muted);font-size:13px;margin-left:auto}
+  .hero .stats .c-blue b{color:var(--blue)} .hero .stats .c-violet b{color:var(--violet)} .hero .stats .c-amber b{color:var(--amber)}
+  .hero .stats div{position:relative} .hero .stats div[class*=c-]::before{content:'';position:absolute;left:0;top:10px;bottom:10px;width:3px;border-radius:2px;background:var(--acc)}
+  .hero .stats .c-blue{--acc:var(--blue)} .hero .stats .c-violet{--acc:var(--violet)} .hero .stats .c-amber{--acc:var(--amber)} .hero .stats .c-green{--acc:var(--green)}
+  .hero .stats div[class*=c-]{padding-left:15px}
+  .hero{background:linear-gradient(135deg,var(--hero) 0%,var(--hero) 55%,color-mix(in srgb,var(--green) 10%,var(--hero)) 100%)}
+  .sched th.c-blue{color:var(--blue)} .sched th.c-violet{color:var(--violet)} .sched th.c-rose{color:var(--rose)} .sched th.c-amber{color:var(--amber)} .sched th.c-green{color:var(--green)}
+  .sched td.c-blue{color:var(--blue)} .sched td.c-violet{color:var(--violet)} .sched td.c-rose{color:var(--rose)} .sched td.c-green{color:var(--green);font-weight:600}
+  .sched tr.mark td{background:var(--blue-soft)}
 
   /* hero */
   .hero{background:var(--hero);color:var(--hero-ink);border:0;padding:18px 16px 14px}
   .hero .leadrow{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:6px}
+  .hero .leadrow .lead{min-width:0}
   .hero .lead{font-size:13px;letter-spacing:.02em;text-transform:uppercase;opacity:.6;margin:0;font-weight:600}
   .hero .big{font-size:60px;font-weight:600;line-height:1;letter-spacing:-.03em;margin:0;display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
   .hero .big small{font-size:15px;font-weight:500;opacity:.6;letter-spacing:0}
-  .hero .pill{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600;padding:4px 10px;border-radius:999px;background:var(--hero-chip);color:var(--green);letter-spacing:.01em;vertical-align:middle}
+  .hero .pill{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600;padding:4px 10px;border-radius:999px;white-space:nowrap;flex-shrink:0;background:var(--hero-chip);color:var(--green);letter-spacing:.01em;vertical-align:middle}
   .hero .pill::before{content:'';width:7px;height:7px;border-radius:50%;background:currentColor}
   .hero .pill.warn{color:var(--amber)}
   .hero .sub{font-size:14px;opacity:.78;margin:10px 0 0;line-height:1.4}
   .hero .stats{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--hero-line);border:1px solid var(--hero-line);border-radius:10px;overflow:hidden;margin-top:16px}
   .hero .stats div{background:var(--hero);padding:11px 12px 10px;min-width:0}
   .hero .stats div.wide{grid-column:1/-1;display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:12px 12px}
+  .hero .stats div.wide>span{flex:1;min-width:0} .hero .stats div.wide>b{flex-shrink:0;overflow:visible}
   .hero .stats div.wide span{font-size:13px;opacity:.75}
   .hero .stats div.wide em{display:block;font-style:normal;font-size:11.5px;opacity:.7;margin-top:2px}
   .hero .stats div.wide b{font-size:21px}
@@ -101,6 +114,7 @@
   td:last-child{text-align:right;white-space:nowrap}
   td.total{font-weight:600}
   td.sub{color:var(--muted);padding-left:14px;font-size:13.5px}
+  td.c-blue{color:var(--blue)} td.c-rose{color:var(--rose)} td.c-violet{color:var(--violet)}
   .note{font-size:12.5px;color:var(--muted);margin:10px 0 0}
   details summary{cursor:pointer;font-size:14px;font-weight:600}
   details p{font-size:13.5px;color:var(--muted);margin:8px 0 0}
@@ -109,7 +123,6 @@
   .sched th{font-weight:600;color:var(--muted);text-align:right;padding:4px 6px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--panel)}
   .sched th:first-child,.sched td:first-child{text-align:left;position:sticky;left:0;background:var(--panel);padding-left:0}
   .sched td{padding:4px 6px;text-align:right;border-bottom:1px solid var(--line)}
-  .sched tr.mark td{color:var(--green);font-weight:600}
   .sched td.rmdHit{color:var(--amber);font-weight:600}
   .sched tr.out td{color:var(--amber)}
   .schedCtl{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:8px;font-size:13px}
@@ -130,23 +143,23 @@
   </header>
 
   <section class="hero" aria-live="polite">
-    <div class="leadrow"><p class="lead">First-year withdrawal rate</p><span class="pill" id="pill"></span></div>
+    <div class="leadrow"><p class="lead">Withdrawal rate, year one</p><span class="pill" id="pill"></span></div>
     <div class="big"><span id="rate">—</span><small>of the 401k, per year</small></div>
     <p class="sub" id="rateSub"></p>
     <div class="stats">
       <div><b id="balRet">—</b><span>401k at retirement</span></div>
       <div><b id="wdRet">—</b><span>First-year withdrawal</span></div>
-      <div><b id="wdSS">—</b><span>After Social Security starts</span></div>
-      <div><b id="ssBen">—</b><span>Social Security</span></div>
-      <div><b id="medFirst">—</b><span>Healthcare, first year</span></div>
-      <div><b id="hsaRet">—</b><span id="hsaRetLbl">HSA at retirement</span></div>
-      <div><b id="rmdFirst">—</b><span id="rmdFirstLbl">First RMD</span></div>
+      <div class="c-blue"><b id="wdSS">—</b><span>After Social Security starts</span></div>
+      <div class="c-blue"><b id="ssBen">—</b><span>Social Security</span></div>
+      <div class="c-violet"><b id="medFirst">—</b><span>Healthcare, first year</span></div>
+      <div class="c-violet"><b id="hsaRet">—</b><span id="hsaRetLbl">HSA at retirement</span></div>
+      <div class="c-amber"><b id="rmdFirst">—</b><span id="rmdFirstLbl">First RMD</span></div>
       <div><b id="coastAge">—</b><span>Coast FIRE</span></div>
       <div id="lastsTile" class="wide"><span>Money lasts<em id="lastsNote"></em></span><b id="lasts">—</b></div>
     </div>
   </section>
 
-  <section>
+  <section data-c="muted">
     <h2>Saved scenarios</h2>
     <div class="scen" id="scenarios">
       <select id="scenSel" aria-label="Saved scenario"><option value="">— unsaved —</option></select>
@@ -164,13 +177,13 @@
     </div>
   </section>
 
-  <section>
+  <section data-c="green">
     <h2>Projection</h2>
     <canvas id="chart" width="600" height="220" role="img" aria-label="401k balance by age"></canvas>
-    <div class="legend"><span><i style="background:var(--green)"></i>Saving</span><span><i style="background:var(--amber)"></i>Drawing down</span><span id="sideLegend" hidden><i style="background:var(--muted)"></i>Taxable account (excess RMDs)</span></div>
+    <div class="legend"><span><i style="background:var(--green)"></i>Saving</span><span><i style="background:var(--amber)"></i>Drawing down</span><span id="ssLegend" hidden><i style="background:var(--blue)"></i>Social Security starts</span><span id="sideLegend" hidden><i style="background:var(--muted)"></i>Taxable account (excess RMDs)</span></div>
   </section>
 
-  <section>
+  <section data-c="green">
     <h2>You today</h2>
     <div class="field"><label for="age">Current age</label><input id="age" type="number" step="0.5" value="50"></div>
     <div class="field"><label for="retAge">Retire at</label><input id="retAge" type="number" step="1" value="65"></div>
@@ -181,7 +194,7 @@
     <div class="field"><label for="infl">Inflation %</label><input id="infl" type="number" step="0.5" value="3"></div>
   </section>
 
-  <section>
+  <section data-c="blue">
     <h2>Retirement income</h2>
     <div class="field"><label for="need">Net income needed (today's $)</label>
       <div style="display:flex;gap:6px;align-items:center"><input id="need" type="number" step="100" value="60000" style="width:110px"><div class="seg" id="needPer"><button aria-pressed="true" data-v="year">/yr</button><button aria-pressed="false" data-v="month">/mo</button></div></div>
@@ -200,7 +213,7 @@
     <div class="field"><label for="endAge">Plan to age</label><input id="endAge" type="number" step="1" value="95"></div>
   </section>
 
-  <section>
+  <section data-c="violet">
     <h2>Healthcare</h2>
     <div class="field"><label for="medInfl">Medical cost inflation %</label><input id="medInfl" type="number" step="0.5" value="5"><span class="hint">Historically runs 2–3 points above general inflation.</span></div>
     <div class="field"><label for="preMed">Before 65: insurance premium, monthly</label><input id="preMed" type="number" step="50" value="1100"><span class="hint">Only used if you retire before 65. Unsubsidized marketplace coverage for someone in their early 60s runs roughly $900–1,400/mo per person; subsidies depend on income.</span></div>
@@ -218,32 +231,32 @@
     <table id="medTable" style="margin-top:12px"></table>
   </section>
 
-  <section>
+  <section data-c="rose">
     <h2>First-year budget (today's dollars)</h2>
     <table id="taxTable"></table>
     <p class="note">Withdrawal covers spending, healthcare not paid by the HSA, and taxes. Uses 2026 federal brackets, standard deduction, and the over-65 add-on. Ohio: flat 2.75% above $26,050, personal exemption, retirement income credit and senior credit. Social Security is not taxed by Ohio or by school districts. School district rates are the Ohio Department of Taxation's 2026 list; check your district's current rate since levies expire and renew.</p>
   </section>
 
-  <section>
+  <section data-c="amber">
     <h2>Year-by-year schedule</h2>
     <div class="schedCtl"><div class="seg" id="schedDollars"><button aria-pressed="true" data-v="nom">Future $</button><button aria-pressed="false" data-v="real">Today's $</button></div><span class="hint" id="schedHint">Each year of retirement. Swipe sideways on a phone.</span></div>
     <div class="sched"><table id="schedTable"></table></div>
     <p class="note">Balance is at the start of each year. RMD is the required minimum that year; when it's larger than you need, the Withdrawal equals it (shown in amber) and the extra lands in the taxable account. Taxes are federal, state and school district on that year's income plus IRMAA. Healthcare is the full cost; the HSA column is the part it paid. Spend is what's left for living, in that year's dollars.</p>
   </section>
 
-  <section>
+  <section data-c="green">
     <h2>Coast FIRE</h2>
     <table id="coastTable"></table>
     <p class="note">The "number" is the smallest balance at retirement that still lasts to your plan age with everything above included: taxes, healthcare, Social Security timing, and RMDs. Coast FIRE is the first month your balance, left to grow with no further contributions, would reach that number by your retirement age.</p>
   </section>
 
-  <section>
+  <section data-c="amber">
     <h2>Required minimum distributions</h2>
     <table id="rmdTable"></table>
     <p class="note">RMDs start at 73 if you were born before 1960, otherwise 75, and use the IRS Uniform Lifetime Table. When the RMD is larger than what you need, the app withdraws the full RMD, pays tax on all of it, spends what's needed, and moves the rest into a taxable account that keeps growing and is drawn on if the 401k runs dry.</p>
   </section>
 
-  <section>
+  <section data-c="green">
     <h2>How the balance gets there</h2>
     <table id="growTable"></table>
   </section>
@@ -445,13 +458,13 @@ const SD=[["3301","Ada EVSD","Hardin, Hancock",0.015,"T"],["2301","Amanda-Clearc
       :`${fmt(wRet)} from a ${fmt(b)} balance at ${retAge}, plus ${fmt(first.ssNom)} Social Security (${retYear} dollars)`;
     $('balRet').textContent=fmt(b);
     $('wdRet').textContent=fmt(wRet);
-    $('wdSS').textContent=fmt(afterSS.wNom)+(afterSS.age>retAge?` at ${afterSS.age}`:''); $('wdSS').parentElement.className=afterSS.age>retAge?'':'muted';
+    $('wdSS').textContent=fmt(afterSS.wNom)+(afterSS.age>retAge?` at ${afterSS.age}`:''); $('wdSS').parentElement.className='c-blue'+(afterSS.age>retAge?'':' muted');
     $('ssBen').textContent=fmt(ssAnnual/12)+'/mo'; $('ssBen').nextElementSibling.textContent=`Social Security from ${claimAge}`;
     $('medFirst').textContent=fmt(first.medNom); $('medFirst').nextElementSibling.textContent=retAge<65?'Healthcare, first year (pre-Medicare)':'Healthcare, first year';
     $('hsaRetLbl').textContent=`HSA at ${retAge}`;
-    $('hsaRet').textContent=hsaAtRet>0?fmt(hsaAtRet):'—'; $('hsaRet').parentElement.className=hsaAtRet>0?'':'muted';
+    $('hsaRet').textContent=hsaAtRet>0?fmt(hsaAtRet):'—'; $('hsaRet').parentElement.className='c-violet'+(hsaAtRet>0?'':' muted');
     $('rmdFirstLbl').textContent=`First RMD at ${rmdAge}`;
-    $('rmdFirst').textContent=firstRmd?fmt(firstRmd.rmdNom):'—'; $('rmdFirst').parentElement.className=firstRmd?'':'muted';
+    $('rmdFirst').textContent=firstRmd?fmt(firstRmd.rmdNom):'—'; $('rmdFirst').parentElement.className='c-amber'+(firstRmd?'':' muted');
     const coastAge=coastMonth===null?null:age+coastMonth/12;
     $('coastAge').textContent=coastMonth===null?`Not by ${retAge}`:coastMonth===0?'Reached':`Age ${coastAge.toFixed(1)}`; $('coastAge').parentElement.className=coastMonth===null?'':'hl';
 
@@ -470,9 +483,9 @@ const SD=[["3301","Ada EVSD","Hardin, Hancock",0.015,"T"],["2301","Amanda-Clearc
     // schedule
     const real=schedDollars==='real'; const k=r=>real?1/r.inflate:1, f0=v=>Math.round(v).toLocaleString('en-US');
     $('schedHint').textContent=real?`Shown in today's purchasing power. Swipe sideways on a phone.`:`Each year of retirement, in that year's dollars. Swipe sideways on a phone.`;
-    $('schedTable').innerHTML='<thead><tr><th>Age</th><th>Year</th><th>401k start</th><th>RMD</th><th>Withdrawal</th><th>Soc Sec</th><th>Taxes</th><th>Healthcare</th><th>HSA paid</th><th>Spend</th>'+(endSide>0?'<th>Taxable acct</th>':'')+'</tr></thead><tbody>'+
+    $('schedTable').innerHTML='<thead><tr><th>Age</th><th>Year</th><th>401k start</th><th class="c-amber">RMD</th><th class="c-amber">Withdrawal</th><th class="c-blue">Soc Sec</th><th class="c-rose">Taxes</th><th class="c-violet">Healthcare</th><th class="c-violet">HSA paid</th><th class="c-green">Spend</th>'+(endSide>0?'<th>Taxable acct</th>':'')+'</tr></thead><tbody>'+
       schedRows.map(r=>{ const m=k(r); const cls=[r.age===claimAge&&claimAge>retAge?'mark':'',r.forced?'rmd':'',r.out?'out':''].join(' ');
-        return `<tr class="${cls}"><td>${r.age}</td><td>${r.year}</td><td>${f0(r.start*m)}</td><td class="${r.forced?'rmdHit':''}">${r.rmd?f0(r.rmd*m):'—'}</td><td>${f0(r.w*m)}</td><td>${r.ss?f0(r.ss*m):'—'}</td><td>${f0(r.tax*m)}</td><td>${f0(r.med*m)}</td><td>${r.hsa?f0(r.hsa*m):'—'}</td><td>${f0(r.spend*m)}</td>${endSide>0?`<td>${r.side?f0(r.side*m):'—'}</td>`:''}</tr>`; }).join('')+'</tbody>';
+        return `<tr class="${cls}"><td>${r.age}</td><td>${r.year}</td><td>${f0(r.start*m)}</td><td class="${r.forced?'rmdHit':''}">${r.rmd?f0(r.rmd*m):'—'}</td><td>${f0(r.w*m)}</td><td class="c-blue">${r.ss?f0(r.ss*m):'—'}</td><td class="c-rose">${f0(r.tax*m)}</td><td class="c-violet">${f0(r.med*m)}</td><td class="c-violet">${r.hsa?f0(r.hsa*m):'—'}</td><td class="c-green">${f0(r.spend*m)}</td>${endSide>0?`<td>${r.side?f0(r.side*m):'—'}</td>`:''}</tr>`; }).join('')+'</tbody>';
 
     $('coastTable').innerHTML=cr.map(r=>`<tr><td class="${r[2]}">${r[0]}</td><td class="${r[2]}">${r[1]}</td></tr>`).join('');
     $('lasts').textContent=lastsAge?`Until ${lastsAge}`:`To ${endAge}+`;
@@ -517,18 +530,18 @@ const SD=[["3301","Ada EVSD","Hardin, Hancock",0.015,"T"],["2301","Amanda-Clearc
     const f=first.f, oh=first.oh, cityTax=first.cityTax;
     let rows=[
       ['401k withdrawal (gross)',fmt(first.w),'total'],
-      ['Social Security',first.ss?fmt(first.ss):'not yet claimed',''],
+      ['Social Security',first.ss?fmt(first.ss):'not yet claimed','c-blue'],
       ['Portion of Social Security that is taxable',fmt(f.tss),'sub'],
       ['Adjusted gross income',fmt(f.agi),'sub'],
       ['Deductions'+(f.senior?' (incl. senior deduction)':''),'−'+fmt(f.ded),'sub'],
       ['Federal taxable income',fmt(f.ti),'sub'],
-      ['Federal tax','−'+fmt(f.tax),''],
+      ['Federal tax','−'+fmt(f.tax),'c-rose'],
     ];
-    if(oh) rows.push(['Ohio tax (after '+fmt(oh.credits)+' in credits)','−'+fmt(oh.tax),'']);
+    if(oh) rows.push(['Ohio tax (after '+fmt(oh.credits)+' in credits)','−'+fmt(oh.tax),'c-rose']);
     if(first.sd.rate>0) rows.push([`${first.sd.name} school district tax, ${(first.sd.rate*100).toFixed(2).replace(/\.?0+$/,'')}% of Ohio taxable income`,'−'+fmt(first.sd.tax),'']);
     else if($('sd').value) rows.push([`${first.sd.name} school district tax (earned income base)`,'$0','']);
     if(cityTax>0) rows.push(['City tax','−'+fmt(cityTax),'']);
-    rows.push([(retAge<65?'Health insurance and medical, before Medicare':'Medicare premiums and medical')+' (grown at medical inflation, in today\'s purchasing power)','−'+fmt(first.medFull+first.irm),'']);
+    rows.push([(retAge<65?'Health insurance and medical, before Medicare':'Medicare premiums and medical')+' (grown at medical inflation, in today\'s purchasing power)','−'+fmt(first.medFull+first.irm),'c-violet']);
     if(first.hsaCover>0) rows.push(['Paid from HSA, tax-free','+'+fmt(first.hsaCover),'sub']);
     rows.push(['Left to spend',fmt(first.w+first.ss-f.tax-(oh?oh.tax:0)-first.sd.tax-cityTax-first.medReal-first.irm),'total']);
     if(gap>0) rows.push([`Withdrawal drops to about ${fmt(afterSS.w)} (today's $) once Social Security starts at ${afterSS.age}`,'','sub']);
@@ -553,7 +566,7 @@ const SD=[["3301","Ada EVSD","Hardin, Hancock",0.015,"T"],["2301","Amanda-Clearc
     const ctx=c.getContext('2d'); ctx.scale(dpr,dpr); ctx.clearRect(0,0,W,H);
     const padL=44,padR=8,padT=10,padB=24;
     const maxBal=Math.max(...series.map(p=>Math.max(p.bal,p.side||0)))*1.08||1;
-    const hasSide=series.some(p=>p.side>0); $('sideLegend').hidden=!hasSide;
+    const hasSide=series.some(p=>p.side>0); $('sideLegend').hidden=!hasSide; $('ssLegend').hidden=!(claimAge>retAge);
     const x=a=>padL+(a-age)/(endAge-age)*(W-padL-padR);
     const y=v=>padT+(1-v/maxBal)*(H-padT-padB);
     const css=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
@@ -567,7 +580,7 @@ const SD=[["3301","Ada EVSD","Hardin, Hancock",0.015,"T"],["2301","Amanda-Clearc
     ctx.setLineDash([3,3]); ctx.strokeStyle=css('--muted'); ctx.beginPath(); ctx.moveTo(x(retAge),padT); ctx.lineTo(x(retAge),H-padB); ctx.stroke(); ctx.setLineDash([]);
     ctx.textAlign='left'; ctx.fillText('retire',x(retAge)+4,padT+10);
     if(coastAge&&coastAge>age&&coastAge<retAge){ ctx.setLineDash([3,3]); ctx.strokeStyle=css('--green'); ctx.beginPath(); ctx.moveTo(x(coastAge),padT); ctx.lineTo(x(coastAge),H-padB); ctx.stroke(); ctx.setLineDash([]); ctx.fillStyle=css('--green'); ctx.fillText('coast',x(coastAge)+4,padT+10); ctx.fillStyle=css('--muted'); ctx.strokeStyle=css('--muted'); }
-    if(claimAge>retAge){ ctx.setLineDash([3,3]); ctx.beginPath(); ctx.moveTo(x(claimAge),padT); ctx.lineTo(x(claimAge),H-padB); ctx.stroke(); ctx.setLineDash([]); ctx.fillText('SS starts',x(claimAge)+4,padT+22); }
+    if(claimAge>retAge){ ctx.setLineDash([3,3]); ctx.strokeStyle=css('--blue'); ctx.fillStyle=css('--blue'); ctx.beginPath(); ctx.moveTo(x(claimAge),padT); ctx.lineTo(x(claimAge),H-padB); ctx.stroke(); ctx.setLineDash([]); ctx.fillText('SS starts',x(claimAge)+4,padT+22); ctx.strokeStyle=css('--muted'); ctx.fillStyle=css('--muted'); }
     // fills + lines
     const seg=(pts,color,soft)=>{ if(pts.length<2) return;
       ctx.beginPath(); ctx.moveTo(x(pts[0].age),y(0)); pts.forEach(p=>ctx.lineTo(x(p.age),y(p.bal))); ctx.lineTo(x(pts[pts.length-1].age),y(0)); ctx.closePath(); ctx.fillStyle=soft; ctx.fill();
