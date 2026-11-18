@@ -13,14 +13,14 @@
 <style>
   :root{
     --paper:#EDF0F3; --panel:#FFFFFF; --ink:#1B2836; --muted:#5C6B7A;
-    --line:#D3DAE1; --green:#1F5FD9; --green-soft:#DCE6FA; --amber:#A8641A; --amber-soft:#F6E9D6;
+    --line:#D3DAE1; --green:#0E6B54; --green-soft:#DDEFE8; --amber:#A8641A; --amber-soft:#F6E9D6;
     --radius:10px;
     --hero:#1B2836; --hero-ink:#FFFFFF; --hero-line:rgba(255,255,255,.18); --hero-chip:rgba(255,255,255,.12);
   }
   :root[data-theme=dark]{
     --paper:#07080A; --panel:#111317; --ink:#E4E6EA; --muted:#8B919B;
-    --line:#22262D; --green:#3B82F6; --green-soft:#0F1F3D; --amber:#E3A04F; --amber-soft:#3A2B16;
-    --hero:#111317; --hero-ink:#F2F5F8; --hero-line:rgba(255,255,255,.12); --hero-chip:rgba(59,130,246,.16);
+    --line:#22262D; --green:#3CC79A; --green-soft:#10302A; --amber:#E3A04F; --amber-soft:#3A2B16;
+    --hero:#111317; --hero-ink:#F2F5F8; --hero-line:rgba(255,255,255,.12); --hero-chip:rgba(60,199,154,.14);
   }
   .topbar{display:flex;justify-content:space-between;align-items:flex-start;gap:8px 12px;flex-wrap:wrap}
   .topbar>div{flex-wrap:wrap}
@@ -29,6 +29,17 @@
   .theme button[aria-pressed=true]{background:var(--ink);color:var(--paper)}
   .reset{font:inherit;font-size:12.5px;padding:5px 9px;border:1px solid var(--line);border-radius:7px;background:var(--panel);color:var(--muted);cursor:pointer;margin-top:2px}
   .reset:hover{color:var(--ink)}
+  .scen{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+  .scen select{flex:1 1 160px;min-width:0}
+  .scen .btn{font:inherit;font-size:13px;padding:7px 11px;border:1px solid var(--line);border-radius:7px;background:var(--panel);color:var(--ink);cursor:pointer;white-space:nowrap}
+  .scen .btn:hover{border-color:var(--green)}
+  .scen .btn.primary{background:var(--green);border-color:var(--green);color:#fff}
+  :root[data-theme=dark] .scen .btn.primary{color:#07080A}
+  .scen .btn:disabled{opacity:.4;cursor:default}
+  .scen .io{display:flex;gap:8px;flex-wrap:wrap;width:100%;padding-top:8px;border-top:1px solid var(--line);margin-top:2px}
+  .scen .io .btn{color:var(--muted)}
+  .scen .msg{font-size:12.5px;color:var(--muted);width:100%}
+  .scen .msg.ok{color:var(--green)}
   *{box-sizing:border-box}
   html{-webkit-text-size-adjust:100%;touch-action:manipulation}
   body{touch-action:manipulation}
@@ -115,6 +126,24 @@
       <div><b id="rmdFirst">—</b><span id="rmdFirstLbl">First RMD</span></div>
       <div><b id="coastAge">—</b><span>Coast FIRE reached</span></div>
       <div><b id="lasts">—</b><span>Money lasts</span></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Saved scenarios</h2>
+    <div class="scen" id="scenarios">
+      <select id="scenSel" aria-label="Saved scenario"><option value="">— unsaved —</option></select>
+      <button class="btn" id="scenLoad" type="button">Load</button>
+      <button class="btn primary" id="scenSave" type="button">Save</button>
+      <button class="btn" id="scenSaveAs" type="button">Save as…</button>
+      <button class="btn" id="scenDel" type="button">Delete</button>
+      <div class="io">
+        <button class="btn" id="scenExport" type="button">Export file</button>
+        <button class="btn" id="scenImport" type="button">Import file</button>
+        <input id="scenFile" type="file" accept=".json,application/json" hidden>
+        <button class="btn" id="scenShare" type="button">Copy link</button>
+      </div>
+      <div class="msg" id="scenMsg">Save different versions of your plan — retire at 62 vs 65, claim Social Security at 67 vs 70 — and switch between them. Export a file to move them to another device.</div>
     </div>
   </section>
 
@@ -557,21 +586,57 @@ const SD=[["3301","Ada EVSD","Hardin, Hancock",0.015,"T"],["2301","Amanda-Clearc
   document.querySelectorAll('input,select').forEach(el=>el.addEventListener('input',calcSoon));
   $('need').addEventListener('input',()=>{ if(needPer==='month') $('needHint').textContent=`${fmt(+$('need').value*12)} per year. Spendable, after income taxes. Health insurance and medical costs are added on top, from the section below.`; });
   // ---- remember values between visits (this browser only) ----
-  const KEY='retirement-planner-v1';
+  const KEY='retirement-planner-v1', SKEY='retirement-planner-scenarios-v1';
   const FIELDS=['age','retAge','bal','contrib','coast','growth','infl','need','ss','ssAt','claimAge','state','cityMode','city','sd','senior','endAge','medInfl','preMed','preOop','partB','partD','medigap','medOop','people','hsaBal','hsaContrib','hsaGrowth','hsaUse'];
-  function save(){ try{ const o={}; FIELDS.forEach(id=>{ const el=$(id); o[id]=el.type==='checkbox'?el.checked:el.value; });
-      o._status=status; o._needPer=needPer; o._theme=window.__theme.get(); localStorage.setItem(KEY,JSON.stringify(o)); }catch(e){} }
-  function restore(){ let o=null; try{ o=JSON.parse(localStorage.getItem(KEY)||'null'); }catch(e){} if(!o) return;
+  function snapshot(){ const o={}; FIELDS.forEach(id=>{ const el=$(id); o[id]=el.type==='checkbox'?el.checked:el.value; }); o._status=status; o._needPer=needPer; return o; }
+  function applySnap(o){ if(!o) return;
     FIELDS.forEach(id=>{ if(!(id in o)) return; const el=$(id); if(el.type==='checkbox') el.checked=!!o[id]; else el.value=o[id]; });
     if(o._status){ status=o._status; document.querySelectorAll('#status button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.v===status)); }
-    if(o._needPer){ needPer=o._needPer; document.querySelectorAll('#needPer button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.v===needPer));
-      if(needPer==='month') $('needHint').textContent=`${fmt(+$('need').value*12)} per year. Spendable, after income taxes. Health insurance and medical costs are added on top, from the section below.`; }
-    if(o._theme) window.__theme.set(o._theme);
+    if(o._needPer){ needPer=o._needPer; document.querySelectorAll('#needPer button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.v===needPer)); }
+    $('needHint').textContent=(needPer==='month'?`${fmt(+$('need').value*12)} per year. `:'')+'Spendable, after income taxes. Health insurance and medical costs are added on top, from the section below.';
     $('cityRateRow').hidden=$('cityMode').value!=='rate';
-    if($('sd').value!==o.sd) $('sd').value=''; }
-  const _calc=calc; calc=function(){ _calc(); save(); };
+    if('sd' in o && $('sd').value!==o.sd) $('sd').value=''; }
+  let current='';   // name of the loaded scenario
+  function save(){ try{ const o=snapshot(); o._theme=window.__theme.get(); o._current=current; localStorage.setItem(KEY,JSON.stringify(o)); }catch(e){} }
+  function restore(){ let o=null; try{ o=JSON.parse(localStorage.getItem(KEY)||'null'); }catch(e){} if(!o) return;
+    applySnap(o); if(o._theme) window.__theme.set(o._theme); current=o._current||''; }
+  const _calc=calc; calc=function(){ _calc(); save(); refreshScen(); };
   $('reset').addEventListener('click',()=>{ try{ localStorage.removeItem(KEY); }catch(e){} location.reload(); });
-  restore();
+
+  // ---- named scenarios ----
+  function loadAll(){ try{ return JSON.parse(localStorage.getItem(SKEY)||'{}')||{}; }catch(e){ return {}; } }
+  function storeAll(a){ try{ localStorage.setItem(SKEY,JSON.stringify(a)); return true; }catch(e){ msg('Could not save — browser storage is blocked or full.'); return false; } }
+  function msg(t,ok){ const m=$('scenMsg'); m.textContent=t; m.className='msg'+(ok?' ok':''); }
+  function sameAs(a,b){ return JSON.stringify(a)===JSON.stringify(b); }
+  function refreshScen(){ const all=loadAll(), sel=$('scenSel'), names=Object.keys(all).sort((x,y)=>x.localeCompare(y));
+    const keep=sel.value; sel.innerHTML='<option value="">— unsaved —</option>'+names.map(n=>`<option value="${n.replace(/"/g,'&quot;')}">${n.replace(/</g,'&lt;')}</option>`).join('');
+    sel.value=names.includes(keep)?keep:(names.includes(current)?current:'');
+    const dirty=current&&all[current]&&!sameAs(all[current].data,snapshot());
+    $('scenSave').disabled=!current; $('scenSave').textContent=dirty?'Save changes':'Save';
+    $('scenDel').disabled=!sel.value; $('scenLoad').disabled=!sel.value||sel.value===current&&!dirty;
+    $('scenExport').disabled=!names.length; }
+  function saveAs(name){ const all=loadAll(); all[name]={data:snapshot(),saved:new Date().toISOString()};
+    if(storeAll(all)){ current=name; $('scenSel').value=name; save(); refreshScen(); msg(`Saved "${name}".`,true); } }
+  $('scenSave').addEventListener('click',()=>{ if(current) saveAs(current); });
+  $('scenSaveAs').addEventListener('click',()=>{ let d='Retire at '+$('retAge').value+', SS at '+$('claimAge').value; const all0=loadAll(); let i=2; while(all0[d]&&d!==current) d=`Retire at ${$('retAge').value}, SS at ${$('claimAge').value} (${i++})`; const n=prompt('Name this scenario:',d); if(!n||!n.trim()) return; saveAs(n.trim()); });
+  $('scenSel').addEventListener('change',refreshScen);
+  $('scenLoad').addEventListener('click',()=>{ const n=$('scenSel').value, all=loadAll(); if(!n||!all[n]) return;
+    applySnap(all[n].data); current=n; calc(); msg(`Loaded "${n}".`,true); });
+  $('scenDel').addEventListener('click',()=>{ const n=$('scenSel').value; if(!n) return; if(!confirm(`Delete "${n}"?`)) return;
+    const all=loadAll(); delete all[n]; storeAll(all); if(current===n) current=''; refreshScen(); save(); msg(`Deleted "${n}".`); });
+  // export / import / share link
+  $('scenExport').addEventListener('click',()=>{ const all=loadAll(); const blob=new Blob([JSON.stringify({app:'retirement-planner',version:1,exported:new Date().toISOString(),scenarios:all},null,1)],{type:'application/json'});
+    const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='retirement-planner-scenarios.json'; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href),1000); msg(`Exported ${Object.keys(all).length} scenario(s).`,true); });
+  $('scenImport').addEventListener('click',()=>$('scenFile').click());
+  $('scenFile').addEventListener('change',e=>{ const f=e.target.files[0]; if(!f) return; const r=new FileReader();
+    r.onload=()=>{ try{ const j=JSON.parse(r.result); const inc=j.scenarios||(j.app==='retirement-planner'&&j.data?{[j.name||'Imported']:j}:null); if(!inc) throw 0;
+        const all=loadAll(); let n=0; Object.keys(inc).forEach(k=>{ if(inc[k]&&inc[k].data){ all[k]=inc[k]; n++; } }); storeAll(all); refreshScen(); msg(`Imported ${n} scenario(s).`,true); }
+      catch(err){ msg('That file is not a retirement planner export.'); } e.target.value=''; };
+    r.readAsText(f); });
+  $('scenShare').addEventListener('click',async()=>{ const o=snapshot(); const u=new URL(location.href); u.hash='s='+btoa(unescape(encodeURIComponent(JSON.stringify(o))));
+    try{ await navigator.clipboard.writeText(u.toString()); msg('Link copied. Anyone who opens it sees these values.',true); }
+    catch(err){ prompt('Copy this link:',u.toString()); } });
+  (function(){ if(location.hash.startsWith('#s=')){ try{ const o=JSON.parse(decodeURIComponent(escape(atob(location.hash.slice(3))))); applySnap(o); current=''; history.replaceState(null,'',location.pathname+location.search); setTimeout(()=>msg('Loaded values from the link. Use "Save as…" to keep them.',true),0); return; }catch(e){} } restore(); })();
   window.addEventListener('resize',calc);
   document.addEventListener('gesturestart',e=>e.preventDefault(),{passive:false});
   let lastTouch=0; document.addEventListener('touchend',e=>{ const n=Date.now(); if(n-lastTouch<300&&!e.target.closest('input,select,button')) e.preventDefault(); lastTouch=n; },{passive:false});
