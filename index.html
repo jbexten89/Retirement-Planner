@@ -105,12 +105,12 @@
   details summary{cursor:pointer;font-size:14px;font-weight:600}
   details p{font-size:13.5px;color:var(--muted);margin:8px 0 0}
   .sched{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:0 -16px;padding:0 16px}
-  .sched table{font-size:12.5px;min-width:620px;white-space:nowrap}
+  .sched table{font-size:12.5px;min-width:700px;white-space:nowrap}
   .sched th{font-weight:600;color:var(--muted);text-align:right;padding:4px 6px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--panel)}
   .sched th:first-child,.sched td:first-child{text-align:left;position:sticky;left:0;background:var(--panel);padding-left:0}
   .sched td{padding:4px 6px;text-align:right;border-bottom:1px solid var(--line)}
   .sched tr.mark td{color:var(--green);font-weight:600}
-  .sched tr.rmd td:first-child::after{content:' RMD';font-size:10px;color:var(--amber);font-weight:600}
+  .sched td.rmdHit{color:var(--amber);font-weight:600}
   .sched tr.out td{color:var(--amber)}
   .schedCtl{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:8px;font-size:13px}
   @media (prefers-reduced-motion:no-preference){.hero .big span{transition:opacity .15s}}
@@ -221,7 +221,7 @@
     <h2>Year-by-year schedule</h2>
     <div class="schedCtl"><div class="seg" id="schedDollars"><button aria-pressed="true" data-v="nom">Future $</button><button aria-pressed="false" data-v="real">Today's $</button></div><span class="hint" id="schedHint">Each year of retirement. Swipe sideways on a phone.</span></div>
     <div class="sched"><table id="schedTable"></table></div>
-    <p class="note">Balance is at the start of each year. Withdrawal is the gross 401k draw, including anything forced by an RMD; Taxes are federal, state and school district on that year's income plus IRMAA. Healthcare is the full cost; the HSA column is the part it paid. Spend is what's left for living, in that year's dollars.</p>
+    <p class="note">Balance is at the start of each year. RMD is the required minimum that year; when it's larger than you need, the Withdrawal equals it (shown in amber) and the extra lands in the taxable account. Taxes are federal, state and school district on that year's income plus IRMAA. Healthcare is the full cost; the HSA column is the part it paid. Spend is what's left for living, in that year's dollars.</p>
   </section>
 
   <section>
@@ -463,9 +463,9 @@ const SD=[["3301","Ada EVSD","Hardin, Hancock",0.015,"T"],["2301","Amanda-Clearc
     // schedule
     const real=schedDollars==='real'; const k=r=>real?1/r.inflate:1, f0=v=>Math.round(v).toLocaleString('en-US');
     $('schedHint').textContent=real?`Shown in today's purchasing power. Swipe sideways on a phone.`:`Each year of retirement, in that year's dollars. Swipe sideways on a phone.`;
-    $('schedTable').innerHTML='<thead><tr><th>Age</th><th>Year</th><th>401k start</th><th>Withdrawal</th><th>Soc Sec</th><th>Taxes</th><th>Healthcare</th><th>HSA paid</th><th>Spend</th>'+(endSide>0?'<th>Taxable acct</th>':'')+'</tr></thead><tbody>'+
+    $('schedTable').innerHTML='<thead><tr><th>Age</th><th>Year</th><th>401k start</th><th>RMD</th><th>Withdrawal</th><th>Soc Sec</th><th>Taxes</th><th>Healthcare</th><th>HSA paid</th><th>Spend</th>'+(endSide>0?'<th>Taxable acct</th>':'')+'</tr></thead><tbody>'+
       schedRows.map(r=>{ const m=k(r); const cls=[r.age===claimAge&&claimAge>retAge?'mark':'',r.forced?'rmd':'',r.out?'out':''].join(' ');
-        return `<tr class="${cls}"><td>${r.age}</td><td>${r.year}</td><td>${f0(r.start*m)}</td><td>${f0(r.w*m)}</td><td>${r.ss?f0(r.ss*m):'—'}</td><td>${f0(r.tax*m)}</td><td>${f0(r.med*m)}</td><td>${r.hsa?f0(r.hsa*m):'—'}</td><td>${f0(r.spend*m)}</td>${endSide>0?`<td>${r.side?f0(r.side*m):'—'}</td>`:''}</tr>`; }).join('')+'</tbody>';
+        return `<tr class="${cls}"><td>${r.age}</td><td>${r.year}</td><td>${f0(r.start*m)}</td><td class="${r.forced?'rmdHit':''}">${r.rmd?f0(r.rmd*m):'—'}</td><td>${f0(r.w*m)}</td><td>${r.ss?f0(r.ss*m):'—'}</td><td>${f0(r.tax*m)}</td><td>${f0(r.med*m)}</td><td>${r.hsa?f0(r.hsa*m):'—'}</td><td>${f0(r.spend*m)}</td>${endSide>0?`<td>${r.side?f0(r.side*m):'—'}</td>`:''}</tr>`; }).join('')+'</tbody>';
 
     $('coastTable').innerHTML=cr.map(r=>`<tr><td class="${r[2]}">${r[0]}</td><td class="${r[2]}">${r[1]}</td></tr>`).join('');
     $('lasts').textContent=lastsAge?`Until ${lastsAge}`:`To ${endAge}+`;
