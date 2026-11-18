@@ -22,13 +22,13 @@
     --line:#22262D; --green:#3CC79A; --green-soft:#10302A; --amber:#E3A04F; --amber-soft:#3A2B16;
     --hero:#111317; --hero-ink:#F2F5F8; --hero-line:rgba(255,255,255,.12); --hero-chip:rgba(60,199,154,.14);
   }
-  .topbar{display:flex;justify-content:space-between;align-items:flex-start;gap:8px 12px;flex-wrap:wrap}
-  .topbar>div{flex-wrap:wrap}
-  .theme{display:flex;border:1px solid var(--line);border-radius:7px;overflow:hidden;flex-shrink:0;margin-top:2px}
-  .theme button{font:inherit;font-size:12.5px;padding:5px 9px;border:0;background:var(--panel);color:var(--ink);cursor:pointer}
-  .theme button[aria-pressed=true]{background:var(--ink);color:var(--paper)}
-  .reset{font:inherit;font-size:12.5px;padding:5px 9px;border:1px solid var(--line);border-radius:7px;background:var(--panel);color:var(--muted);cursor:pointer;margin-top:2px}
-  .reset:hover{color:var(--ink)}
+  .hdr{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+  .hdr .logo{width:34px;height:34px;border-radius:9px;flex-shrink:0}
+  .hdr h1{flex:1;min-width:0;margin:0;font-size:21px;line-height:1.15}
+  .hdr h1 small{display:block;font-size:12.5px;font-weight:400;color:var(--muted);margin-top:1px}
+  .ib{width:36px;height:36px;border:1px solid var(--line);border-radius:9px;background:var(--panel);color:var(--muted);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;padding:0;flex-shrink:0}
+  .ib:hover{color:var(--ink)} .ib svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+  .ib .i{display:none} .ib[data-mode=auto] .i-auto,.ib[data-mode=light] .i-light,.ib[data-mode=dark] .i-dark{display:block}
   .scen{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
   .scen select{flex:1 1 160px;min-width:0}
   .scen .btn{font:inherit;font-size:13px;padding:7px 11px;border:1px solid var(--line);border-radius:7px;background:var(--panel);color:var(--ink);cursor:pointer;white-space:nowrap}
@@ -118,9 +118,16 @@
 </head>
 <body>
 <main>
-  <div class="topbar"><h1>Retirement planner</h1>
-    <div style="display:flex;gap:8px;align-items:center;flex-shrink:0"><button id="reset" class="reset" type="button">Reset</button><div class="theme" id="theme" role="group" aria-label="Appearance"><button data-v="light">Light</button><button data-v="auto">Auto</button><button data-v="dark">Dark</button></div></div></div>
-  <p class="sub">Enter your own numbers below. The app grows your 401k to retirement, adds healthcare, grosses up for federal and Ohio taxes, then draws it down. Everything updates as you type, and your values are kept in this browser for next time.</p>
+  <header class="hdr">
+    <img class="logo" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+PHJlY3Qgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0IiByeD0iMTQiIGZpbGw9IiMwNzA4MEEiLz48ZGVmcz48bGluZWFyR3JhZGllbnQgaWQ9ImciIHgxPSIzMiIgeTE9IjAiIHgyPSI1NiIgeTI9IjAiIGdyYWRpZW50VW5pdHM9InVzZXJTcGFjZU9uVXNlIj48c3RvcCBvZmZzZXQ9IjAiIHN0b3AtY29sb3I9IiMzQ0M3OUEiLz48c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiMzQ0M3OUEiIHN0b3Atb3BhY2l0eT0iLjI1Ii8+PC9saW5lYXJHcmFkaWVudD48L2RlZnM+PHBhdGggZD0iTTggNTAgQyAxNCA1MCwgMjAgMTYsIDMyIDE2IEMgNDQgMTYsIDUwIDUwLCA1NiA1MCBaIiBmaWxsPSIjM0NDNzlBIiBvcGFjaXR5PSIuMTYiLz48cGF0aCBkPSJNOCA1MCBDIDE0IDUwLCAyMCAxNiwgMzIgMTYiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzNDQzc5QSIgc3Ryb2tlLXdpZHRoPSI1IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48cGF0aCBkPSJNMzIgMTYgQyA0NCAxNiwgNTAgNTAsIDU2IDUwIiBmaWxsPSJub25lIiBzdHJva2U9InVybCgjZykiIHN0cm9rZS13aWR0aD0iNSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PGNpcmNsZSBjeD0iMzIiIGN5PSIxNiIgcj0iNSIgZmlsbD0iI0UzQTA0RiIvPjwvc3ZnPg==" alt="">
+    <h1>Retirement planner<small>Grow, gross up for taxes, draw down</small></h1>
+    <button id="themeBtn" class="ib" type="button" data-mode="auto" aria-label="Appearance: auto" title="Appearance">
+      <svg class="i i-auto" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 4a8 8 0 0 1 0 16z" fill="currentColor" stroke="none"/></svg>
+      <svg class="i i-light" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+      <svg class="i i-dark" viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg>
+    </button>
+    <button id="reset" class="ib" type="button" aria-label="Reset to defaults" title="Reset to defaults"><svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg></button>
+  </header>
 
   <section class="hero" aria-live="polite">
     <div class="leadrow"><p class="lead">First-year withdrawal rate</p><span class="pill" id="pill"></span></div>
@@ -575,8 +582,8 @@ const SD=[["3301","Ada EVSD","Hardin, Hancock",0.015,"T"],["2301","Amanda-Clearc
     const mq=window.matchMedia('(prefers-color-scheme: dark)'); let mode='auto';
     const apply=()=>{ const dark=mode==='dark'||(mode==='auto'&&mq.matches);
       document.documentElement.dataset.theme=dark?'dark':'light';
-      document.querySelectorAll('#theme button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.v===mode)); calc(); };
-    document.querySelectorAll('#theme button').forEach(b=>b.addEventListener('click',()=>{ mode=b.dataset.v; apply(); }));
+      const tb=$('themeBtn'); tb.dataset.mode=mode; tb.setAttribute('aria-label','Appearance: '+mode); calc(); };
+    $('themeBtn').addEventListener('click',()=>{ mode=mode==='auto'?'light':mode==='light'?'dark':'auto'; apply(); });
     mq.addEventListener('change',()=>{ if(mode==='auto') apply(); });
     window.__applyTheme=apply; window.__theme={get:()=>mode,set:m=>{mode=m;}};
   })();
@@ -612,7 +619,7 @@ const SD=[["3301","Ada EVSD","Hardin, Hancock",0.015,"T"],["2301","Amanda-Clearc
   function restore(){ let o=null; try{ o=JSON.parse(localStorage.getItem(KEY)||'null'); }catch(e){} if(!o) return;
     applySnap(o); if(o._theme) window.__theme.set(o._theme); current=o._current||''; }
   const _calc=calc; calc=function(){ _calc(); save(); refreshScen(); };
-  $('reset').addEventListener('click',()=>{ try{ localStorage.removeItem(KEY); }catch(e){} location.reload(); });
+  $('reset').addEventListener('click',()=>{ if(!confirm('Reset all inputs to defaults? Saved scenarios are kept.')) return; try{ localStorage.removeItem(KEY); }catch(e){} location.reload(); });
 
   // ---- named scenarios ----
   function loadAll(){ try{ return JSON.parse(localStorage.getItem(SKEY)||'{}')||{}; }catch(e){ return {}; } }
