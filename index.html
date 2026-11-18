@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="color-scheme" content="light dark">
 <title>Retirement planner</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+PHJlY3Qgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0IiByeD0iMTQiIGZpbGw9IiMxQjI4MzYiLz48cGF0aCBkPSJNMTIgNDQgQyAyMiA0NCwgMjggMzAsIDM0IDI2IFMgNDYgMTQsIDUyIDEyIiBmaWxsPSJub25lIiBzdHJva2U9IiMzRkJGOTUiIHN0cm9rZS13aWR0aD0iNSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PHBhdGggZD0iTTEyIDQ0IEMgMjIgNDQsIDI4IDMwLCAzNCAyNiBTIDQ2IDE0LCA1MiAxMiBMNTIgNTIgTDEyIDUyIFoiIGZpbGw9IiMzRkJGOTUiIG9wYWNpdHk9Ii4xOCIvPjxjaXJjbGUgY3g9IjUyIiBjeT0iMTIiIHI9IjUiIGZpbGw9IiNFMEEwNTAiLz48L3N2Zz4=">
@@ -22,16 +22,19 @@
     --line:#2A3540; --green:#3FBF95; --green-soft:#153328; --amber:#E0A050; --amber-soft:#3A2B16;
     --hero:#0A0E12; --hero-ink:#F2F5F8; --hero-line:rgba(255,255,255,.14); --hero-chip:rgba(255,255,255,.08);
   }
-  .topbar{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+  .topbar{display:flex;justify-content:space-between;align-items:flex-start;gap:8px 12px;flex-wrap:wrap}
+  .topbar>div{flex-wrap:wrap}
   .theme{display:flex;border:1px solid var(--line);border-radius:7px;overflow:hidden;flex-shrink:0;margin-top:2px}
   .theme button{font:inherit;font-size:12.5px;padding:5px 9px;border:0;background:var(--panel);color:var(--ink);cursor:pointer}
   .theme button[aria-pressed=true]{background:var(--ink);color:var(--paper)}
   .reset{font:inherit;font-size:12.5px;padding:5px 9px;border:1px solid var(--line);border-radius:7px;background:var(--panel);color:var(--muted);cursor:pointer;margin-top:2px}
   .reset:hover{color:var(--ink)}
   *{box-sizing:border-box}
-  html{-webkit-text-size-adjust:100%}
+  html{-webkit-text-size-adjust:100%;touch-action:manipulation}
+  body{touch-action:manipulation}
   body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.45 "Avenir Next","Segoe UI",system-ui,-apple-system,sans-serif;font-variant-numeric:tabular-nums}
-  main{max-width:640px;margin:0 auto;padding:20px 16px 60px}
+  main{max-width:640px;margin:0 auto;padding:20px 16px 60px;overflow-x:hidden}
+  body{overflow-x:hidden}
   h1{font-size:22px;font-weight:600;margin:0 0 4px}
   .sub{color:var(--muted);margin:0 0 18px;font-size:14px}
   section{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:16px;margin-bottom:14px}
@@ -55,7 +58,7 @@
   .field:last-child{border-bottom:0}
   .field label{font-size:14.5px}
   .field .hint{font-size:12px;color:var(--muted);grid-column:1/-1;margin-top:-2px}
-  input[type=number],select{font:inherit;font-size:15px;padding:7px 9px;border:1px solid var(--line);border-radius:7px;width:130px;text-align:right;background:var(--panel);color:var(--ink)}
+  input[type=number],select{font:inherit;font-size:16px;padding:7px 9px;border:1px solid var(--line);border-radius:7px;width:130px;text-align:right;background:var(--panel);color:var(--ink)}
   select{text-align:left;width:auto;min-width:130px}
   input:focus,select:focus{outline:2px solid var(--green);outline-offset:1px;border-color:var(--green)}
   .seg{display:flex;border:1px solid var(--line);border-radius:7px;overflow:hidden}
@@ -85,7 +88,7 @@
 <body>
 <main>
   <div class="topbar"><h1>Retirement planner</h1>
-    <div style="display:flex;gap:8px;align-items:center;flex-shrink:0"><button id="reset" class="reset" type="button">Reset to defaults</button><div class="theme" id="theme" role="group" aria-label="Appearance"><button data-v="light">Light</button><button data-v="auto">Auto</button><button data-v="dark">Dark</button></div></div></div>
+    <div style="display:flex;gap:8px;align-items:center;flex-shrink:0"><button id="reset" class="reset" type="button">Reset</button><div class="theme" id="theme" role="group" aria-label="Appearance"><button data-v="light">Light</button><button data-v="auto">Auto</button><button data-v="dark">Dark</button></div></div></div>
   <p class="sub">Enter your own numbers below. The app grows your 401k to retirement, adds healthcare, grosses up for federal and Ohio taxes, then draws it down. Everything updates as you type, and your values are kept in this browser for next time.</p>
 
   <section class="hero" aria-live="polite">
@@ -515,6 +518,8 @@ const SD=[["3301","Ada EVSD","Hardin, Hancock",0.015,"T"],["2301","Amanda-Clearc
   $('reset').addEventListener('click',()=>{ try{ localStorage.removeItem(KEY); }catch(e){} location.reload(); });
   restore();
   window.addEventListener('resize',calc);
+  document.addEventListener('gesturestart',e=>e.preventDefault(),{passive:false});
+  let lastTouch=0; document.addEventListener('touchend',e=>{ const n=Date.now(); if(n-lastTouch<300&&!e.target.closest('input,select,button')) e.preventDefault(); lastTouch=n; },{passive:false});
   window.__applyTheme();
 })();
 </script>
