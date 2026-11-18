@@ -8,19 +8,19 @@
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+PHJlY3Qgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0IiByeD0iMTQiIGZpbGw9IiMxQjI4MzYiLz48cGF0aCBkPSJNMTIgNDQgQyAyMiA0NCwgMjggMzAsIDM0IDI2IFMgNDYgMTQsIDUyIDEyIiBmaWxsPSJub25lIiBzdHJva2U9IiMzRkJGOTUiIHN0cm9rZS13aWR0aD0iNSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PHBhdGggZD0iTTEyIDQ0IEMgMjIgNDQsIDI4IDMwLCAzNCAyNiBTIDQ2IDE0LCA1MiAxMiBMNTIgNTIgTDEyIDUyIFoiIGZpbGw9IiMzRkJGOTUiIG9wYWNpdHk9Ii4xOCIvPjxjaXJjbGUgY3g9IjUyIiBjeT0iMTIiIHI9IjUiIGZpbGw9IiNFMEEwNTAiLz48L3N2Zz4=">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#1B2836">
+<meta name="theme-color" content="#07080A">
 <meta name="apple-mobile-web-app-title" content="Planner">
 <style>
   :root{
     --paper:#EDF0F3; --panel:#FFFFFF; --ink:#1B2836; --muted:#5C6B7A;
-    --line:#D3DAE1; --green:#0E6B54; --green-soft:#DDEFE8; --amber:#A8641A; --amber-soft:#F6E9D6;
+    --line:#D3DAE1; --green:#1F5FD9; --green-soft:#DCE6FA; --amber:#A8641A; --amber-soft:#F6E9D6;
     --radius:10px;
     --hero:#1B2836; --hero-ink:#FFFFFF; --hero-line:rgba(255,255,255,.18); --hero-chip:rgba(255,255,255,.12);
   }
   :root[data-theme=dark]{
-    --paper:#0F1419; --panel:#182028; --ink:#E6EBF0; --muted:#94A3B3;
-    --line:#2A3540; --green:#3FBF95; --green-soft:#153328; --amber:#E0A050; --amber-soft:#3A2B16;
-    --hero:#0A0E12; --hero-ink:#F2F5F8; --hero-line:rgba(255,255,255,.14); --hero-chip:rgba(255,255,255,.08);
+    --paper:#07080A; --panel:#111317; --ink:#E4E6EA; --muted:#8B919B;
+    --line:#22262D; --green:#3B82F6; --green-soft:#0F1F3D; --amber:#E3A04F; --amber-soft:#3A2B16;
+    --hero:#111317; --hero-ink:#F2F5F8; --hero-line:rgba(255,255,255,.12); --hero-chip:rgba(59,130,246,.16);
   }
   .topbar{display:flex;justify-content:space-between;align-items:flex-start;gap:8px 12px;flex-wrap:wrap}
   .topbar>div{flex-wrap:wrap}
@@ -32,7 +32,7 @@
   *{box-sizing:border-box}
   html{-webkit-text-size-adjust:100%;touch-action:manipulation}
   body{touch-action:manipulation}
-  body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.45 "Avenir Next","Segoe UI",system-ui,-apple-system,sans-serif;font-variant-numeric:tabular-nums}
+  body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.45 "Nunito Sans","Avenir Next","Segoe UI",system-ui,-apple-system,sans-serif;font-variant-numeric:tabular-nums}
   main{max-width:640px;margin:0 auto;padding:20px 16px 60px;overflow-x:hidden}
   body{overflow-x:hidden}
   h1{font-size:22px;font-weight:600;margin:0 0 4px}
@@ -42,15 +42,15 @@
 
   /* hero */
   .hero{background:var(--hero);color:var(--hero-ink);border:0}
-  .hero .big{font-size:52px;font-weight:700;line-height:1;letter-spacing:-.02em;margin:4px 0 2px}
+  .hero .big{font-size:52px;font-weight:600;line-height:1;letter-spacing:-.02em;margin:4px 0 2px}
   .hero .big small{font-size:22px;font-weight:500;opacity:.7;margin-left:4px}
   .hero .lead{font-size:14px;opacity:.75;margin:0}
   .hero .verdict{margin:12px 0 0;padding:10px 12px;border-radius:8px;font-size:14px;font-weight:500}
   .verdict.ok{background:var(--hero-chip)}
-  .verdict.warn{background:var(--amber);color:#fff}
+  .verdict.warn{background:var(--amber);color:#1B1206}
   .hero .row{display:flex;gap:18px;margin-top:16px;padding-top:14px;border-top:1px solid var(--hero-line);flex-wrap:wrap}
   .hero .row div{min-width:120px}
-  .hero .row b{display:block;font-size:20px;font-weight:600}
+  .hero .row b{display:block;font-size:20px;font-weight:500}
   .hero .row span{font-size:12.5px;opacity:.7}
 
   /* inputs */
@@ -82,6 +82,15 @@
   .note{font-size:12.5px;color:var(--muted);margin:10px 0 0}
   details summary{cursor:pointer;font-size:14px;font-weight:600}
   details p{font-size:13.5px;color:var(--muted);margin:8px 0 0}
+  .sched{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:0 -16px;padding:0 16px}
+  .sched table{font-size:12.5px;min-width:620px;white-space:nowrap}
+  .sched th{font-weight:600;color:var(--muted);text-align:right;padding:4px 6px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--panel)}
+  .sched th:first-child,.sched td:first-child{text-align:left;position:sticky;left:0;background:var(--panel);padding-left:0}
+  .sched td{padding:4px 6px;text-align:right;border-bottom:1px solid var(--line)}
+  .sched tr.mark td{color:var(--green);font-weight:600}
+  .sched tr.rmd td:first-child::after{content:' RMD';font-size:10px;color:var(--amber);font-weight:600}
+  .sched tr.out td{color:var(--amber)}
+  .schedCtl{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:8px;font-size:13px}
   @media (prefers-reduced-motion:no-preference){.hero .big{transition:opacity .15s}}
 </style>
 </head>
@@ -170,6 +179,13 @@
   </section>
 
   <section>
+    <h2>Year-by-year schedule</h2>
+    <div class="schedCtl"><div class="seg" id="schedDollars"><button aria-pressed="true" data-v="nom">Future $</button><button aria-pressed="false" data-v="real">Today's $</button></div><span class="hint" id="schedHint">Each year of retirement. Swipe sideways on a phone.</span></div>
+    <div class="sched"><table id="schedTable"></table></div>
+    <p class="note">Balance is at the start of each year. Withdrawal is the gross 401k draw, including anything forced by an RMD; Taxes are federal, state and school district on that year's income plus IRMAA. Healthcare is the full cost; the HSA column is the part it paid. Spend is what's left for living, in that year's dollars.</p>
+  </section>
+
+  <section>
     <h2>Coast FIRE</h2>
     <table id="coastTable"></table>
     <p class="note">The "number" is the smallest balance at retirement that still lasts to your plan age with everything above included: taxes, healthcare, Social Security timing, and RMDs. Coast FIRE is the first month your balance, left to grow with no further contributions, would reach that number by your retirement age.</p>
@@ -200,7 +216,7 @@
   const $=id=>document.getElementById(id);
   const fmt=n=>'$'+Math.round(n).toLocaleString('en-US');
   const pct=n=>(n*100).toFixed(1)+'%';
-  let status='single', needPer='year';
+  let status='single', needPer='year', schedDollars='nom';
 
   // ---- 2026 federal parameters ----
   const FED={
@@ -335,13 +351,13 @@ const SD=[["3301","Ada EVSD","Hardin, Hancock",0.015,"T"],["2301","Amanda-Clearc
     // drawdown from a given starting balance
     function simulate(bStart){
       const series=[]; let cur=bStart, side=0, lastsAge=null, medTotal=0, preTotal=0, irmaaYears=0;
-      let firstRmd=null, rmdExceedsAge=null, excessTotal=0, hsa=hsaAtRet, hsaPaid=0, hsaRunsOut=null, first=null;
+      let firstRmd=null, rmdExceedsAge=null, excessTotal=0, hsa=hsaAtRet, hsaPaid=0, hsaRunsOut=null, first=null; const rows=[];
       for(let a=retAge;a<endAge;a++){
         const t=a-age, inflate=Math.pow(1+infl,t);
         // how much of this year's healthcare the HSA can cover (today's $)
         const medFull=(a<65?preMed:medBase)*Math.pow((1+medInfl)/(1+infl),t);
         const cover=hsaUse?Math.min(medFull,hsa/inflate):0;
-        const yr=year(a,cur,cover); if(a===retAge) first=yr;
+        const startBal=cur; const yr=year(a,cur,cover); if(a===retAge) first=yr;
         hsa=(hsa-cover*inflate)*(1+hg); hsaPaid+=cover*inflate;
         if(hsaUse&&hsaAtRet>0&&cover<medFull&&hsaRunsOut===null) hsaRunsOut=a;
         medTotal+=yr.medNom; if(a<65) preTotal+=yr.medNom; if(yr.irm>0) irmaaYears++;
@@ -351,8 +367,12 @@ const SD=[["3301","Ada EVSD","Hardin, Hancock",0.015,"T"],["2301","Amanda-Clearc
         if(pull>cur){ const short=pull-cur; pull=cur; side-=short; if(side<0&&lastsAge===null) lastsAge=a; side=Math.max(0,side); }
         cur=(cur-pull)*(1+g); side*=(1+g);
         series.push({age:a+1,bal:Math.max(0,cur),side});
+        rows.push({age:a,year:new Date().getFullYear()+Math.round(t),start:startBal,w:yr.wNom,ss:yr.ssNom,med:yr.medNom,hsa:yr.hsaNom,
+          tax:(yr.f.tax+(yr.oh?yr.oh.tax:0)+yr.sd.tax+yr.cityTax+yr.irm)*inflate,
+          spend:(yr.w+yr.ss-yr.f.tax-(yr.oh?yr.oh.tax:0)-yr.sd.tax-yr.cityTax-yr.irm-yr.medReal)*inflate,
+          rmd:yr.rmdNom,forced:yr.forced,side,inflate,out:lastsAge!==null&&a>=lastsAge});
       }
-      return {series,first,lastsAge,endBal:Math.max(0,cur),endSide:side,medTotal,preTotal,irmaaYears,firstRmd,rmdExceedsAge,excessTotal,hsaPaid,hsaRunsOut,hsaEnd:Math.max(0,hsa)};
+      return {rows,series,first,lastsAge,endBal:Math.max(0,cur),endSide:side,medTotal,preTotal,irmaaYears,firstRmd,rmdExceedsAge,excessTotal,hsaPaid,hsaRunsOut,hsaEnd:Math.max(0,hsa)};
     }
     // Coast FIRE: smallest retirement balance that lasts, then the first month the un-topped-up balance would reach it
     let lo=0, hi=Math.max(b,1e5)*4;
@@ -366,7 +386,7 @@ const SD=[["3301","Ada EVSD","Hardin, Hancock",0.015,"T"],["2301","Amanda-Clearc
     const series=[]; for(let y=0;y<=yrs;y++){ series.push({age:age+y,bal:path[Math.min(months,y*12)],side:0}); }
     if(months%12) series.push({age:retAge,bal:b,side:0}); else series[series.length-1].bal=b;
     series.push(...sim.series);
-    const {first,lastsAge,endBal,endSide,medTotal,preTotal,irmaaYears,firstRmd,rmdExceedsAge,excessTotal,hsaPaid,hsaRunsOut,hsaEnd}=sim;
+    const {rows:schedRows,first,lastsAge,endBal,endSide,medTotal,preTotal,irmaaYears,firstRmd,rmdExceedsAge,excessTotal,hsaPaid,hsaRunsOut,hsaEnd}=sim;
     const wRet=first.wNom, rate=b>0?wRet/b:0;
     const afterSS=year(Math.max(claimAge,65));
 
@@ -401,6 +421,13 @@ const SD=[["3301","Ada EVSD","Hardin, Hancock",0.015,"T"],["2301","Amanda-Clearc
     else cr.push([`Coast FIRE reached`,`${coastDate.toLocaleString('en-US',{month:'short',year:'numeric'})}, age ${coastAge.toFixed(1)}`,'total'],
       [`Balance at that point`,fmt(path[coastMonth]),'sub'],
       [$('coast').checked?`Contributions stop there; balance at ${retAge}`:`If you stopped contributing then, balance at ${retAge}`,fmt(path[coastMonth]*Math.pow(1+g,yrs-coastMonth/12)),'sub']);
+    // schedule
+    const real=schedDollars==='real'; const k=r=>real?1/r.inflate:1, f0=v=>Math.round(v).toLocaleString('en-US');
+    $('schedHint').textContent=real?`Shown in today's purchasing power. Swipe sideways on a phone.`:`Each year of retirement, in that year's dollars. Swipe sideways on a phone.`;
+    $('schedTable').innerHTML='<thead><tr><th>Age</th><th>Year</th><th>401k start</th><th>Withdrawal</th><th>Soc Sec</th><th>Taxes</th><th>Healthcare</th><th>HSA paid</th><th>Spend</th>'+(endSide>0?'<th>Taxable acct</th>':'')+'</tr></thead><tbody>'+
+      schedRows.map(r=>{ const m=k(r); const cls=[r.age===claimAge&&claimAge>retAge?'mark':'',r.forced?'rmd':'',r.out?'out':''].join(' ');
+        return `<tr class="${cls}"><td>${r.age}</td><td>${r.year}</td><td>${f0(r.start*m)}</td><td>${f0(r.w*m)}</td><td>${r.ss?f0(r.ss*m):'—'}</td><td>${f0(r.tax*m)}</td><td>${f0(r.med*m)}</td><td>${r.hsa?f0(r.hsa*m):'—'}</td><td>${f0(r.spend*m)}</td>${endSide>0?`<td>${r.side?f0(r.side*m):'—'}</td>`:''}</tr>`; }).join('')+'</tbody>';
+
     $('coastTable').innerHTML=cr.map(r=>`<tr><td class="${r[2]}">${r[0]}</td><td class="${r[2]}">${r[1]}</td></tr>`).join('');
     $('lasts').textContent=lastsAge?`Until ${lastsAge}`:`Past ${endAge}`;
     const v=$('verdict');
@@ -520,6 +547,8 @@ const SD=[["3301","Ada EVSD","Hardin, Hancock",0.015,"T"],["2301","Amanda-Clearc
     document.querySelectorAll('#needPer button').forEach(b=>b.setAttribute('aria-pressed',b===bt));
     $('needHint').textContent=(needPer==='month'?`${fmt(+el.value*12)} per year. `:'')+'Spendable, after income taxes. Health insurance and medical costs are added on top, from the section below.';
     calc(); }));
+  document.querySelectorAll('#schedDollars button').forEach(bt=>bt.addEventListener('click',()=>{
+    schedDollars=bt.dataset.v; document.querySelectorAll('#schedDollars button').forEach(b=>b.setAttribute('aria-pressed',b===bt)); calc(); }));
   document.querySelectorAll('#status button').forEach(bt=>bt.addEventListener('click',()=>{
     status=bt.dataset.v; document.querySelectorAll('#status button').forEach(b=>b.setAttribute('aria-pressed',b===bt)); calc(); }));
   document.querySelectorAll('input[type=number]').forEach(el=>{ const sel=()=>{ requestAnimationFrame(()=>el.select()); };
